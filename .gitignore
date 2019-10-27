@@ -1,0 +1,5 @@
+./3rdparty/opencv
+Debug
+build
+data/videos
+tests
