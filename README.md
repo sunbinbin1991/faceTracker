@@ -9,6 +9,9 @@ ncnn Windows Vs2015 Win64
 
 + [opencv](https://github.com/opencv/opencv)
 
+## 测试结果
+![test](https://github.com/sunbinbin1991/faceTracker/blob/master/data/IU_mark.jpg?raw=true)
+
 ## 引用
 [HyperFT](https://github.com/zeusees/HyperFT)：参考部分代码架构
 
