@@ -46,7 +46,7 @@ void test_image() {
 	landmark lk;
 	
 	cv::Mat frame;
-	frame = cv::imread("../../data/trip_640.jpg");
+	frame = cv::imread("../../data/IU.jpg");
 	if (frame.empty()) {
 		printf("The End\n");
 		return;
@@ -61,6 +61,7 @@ void test_image() {
 	drawFaces(frame, faces);
 	int64 ticend = cv::getTickCount();
 	printf("detection time used %f\n", (ticend - ticbegin) / cv::getTickFrequency());
+	cv::imwrite("../../data/IU_mark.jpg", frame);
 	cv::imshow("image", frame);
 	char key = cv::waitKey(0);
 	if (key == 27) {

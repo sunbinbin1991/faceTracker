@@ -15,6 +15,7 @@ void landmark::get_landmark(const cv::Mat& image, std::vector<Bbox> &faces) {
 	for (int i = 0; i < faces.size(); i++)
 	{
 		Bbox bb = faces[i];
+		faces[i].numpts = 112;
 		cv::Rect face_rect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1);
 		cv::Mat img_face = _image(face_rect).clone();
 
@@ -32,11 +33,6 @@ void landmark::get_landmark(const cv::Mat& image, std::vector<Bbox> &faces) {
 			faces[i].ppoint[2 * j+1] = y;
 		}
 	}
-
-	
-
-
-
 }
 
 landmark::~landmark()

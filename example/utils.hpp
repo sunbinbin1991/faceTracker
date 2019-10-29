@@ -10,13 +10,13 @@ inline void drawFace(cv::Mat& img, const Bbox& face, const cv::Scalar& color = c
 	cv::Rect rect(face.x1, face.y1, face.x2 - face.x1, face.y2 - face.y1);
 	//printf("face %f, %f %f %f\n", face.xmin, face.ymin, face.xmax - face.xmin, face.ymax - face.ymin);
 	cv::rectangle(img, rect, color, 2);
-	for (int i = 0; i < 106; i++) {
+	for (int i = 0; i < face.numpts; i++) {
 		float x = face.ppoint[2 * i];
 		float y = face.ppoint[2 * i + 1];
 		cv::Point ppt(x, y);
 		cv::circle(img, ppt, 2, color, -1);
 	}
-	char angletext[256] = "hell0";
+	char angletext[256] = "IU is Mine";
 	cv::putText(img, angletext, cv::Point(face.x1, face.y1-10), cv::FONT_HERSHEY_TRIPLEX, 1, cv::Scalar(0, 0, 255), 1, 8);
 }
 
