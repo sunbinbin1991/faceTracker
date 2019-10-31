@@ -14,13 +14,17 @@ struct FaceBox
 };
 
 class FaceTrack {
+
+
 public:
 	int id_;
 	FaceBox bbox_;
+	float score_;
 
 	FaceTrack(int id, const FaceBox& rect) 
 	: id_(id)
-	, bbox_(rect){}
+	, bbox_(rect)
+	, score_(1){}
 };
 namespace Shape {
 

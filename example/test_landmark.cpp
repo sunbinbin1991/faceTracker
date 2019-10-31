@@ -10,7 +10,8 @@
 
 void test_video_cameral() {
 	string model_path = "../../src/detect/models/ncnn";
-	MTCNN * mt = new MTCNN(model_path);
+	MTCNN * mt = new MTCNN();
+	mt->Initialize(model_path);
 
 	cv::Mat frame;
 	cv::VideoCapture cap(0);
@@ -42,7 +43,8 @@ void test_video_cameral() {
 
 void test_image() {
 	string model_path = "../../src/detect/models/ncnn";
-	MTCNN * mt = new MTCNN(model_path);
+	MTCNN  mt = MTCNN();
+	mt.Initialize(model_path);
 	landmark lk;
 	
 	cv::Mat frame;
@@ -54,7 +56,7 @@ void test_image() {
 	std::vector<FaceBox> faces;
 	int64 ticbegin = cv::getTickCount();
 	ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR2RGB, frame.cols, frame.rows);
-	mt->detect(ncnn_img, faces);
+	mt.detect(ncnn_img, faces);
 
 	lk.get_landmark(frame, faces);
 

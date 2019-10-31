@@ -8,5 +8,7 @@ add_executable(test_landmark test_landmark.cpp )
 
 target_link_libraries(test_landmark mtdetect landmark ncnn ${OpenCV_LIBS})
 
+add_executable(test_track test_track.cpp )
 
+target_link_libraries(test_track track mtdetect landmark ncnn ${OpenCV_LIBS})
 

@@ -4,6 +4,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "common.h"
+#include "../detect/mtcnn.h"
 
 class track
 {
@@ -14,11 +15,15 @@ public:
 	//detect related init
 	void init_detector();
 
-	void tracking(const cv::Mat& frame) {};
+	void tracking(const cv::Mat& frame);
 
 
 private:
-	std::atomic<bool> flag = ATOMIC_VAR_INIT(false);
+	cv::Mat m_curr_frame;
+
+	std::atomic<bool> m_flag = ATOMIC_VAR_INIT(false);
+
+	std::unique_ptr<MTCNN> m_detector;//
 
 // tracking strategy 0 : KCF
 

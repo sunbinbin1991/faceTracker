@@ -1,6 +1,11 @@
 #include <cmath>
 #include "mtcnn.h"
-
+#include "models/ncnn/det1.id.h"
+#include "models/ncnn/det1.mem.h"
+#include "models/ncnn/det2.id.h"
+#include "models/ncnn/det2.mem.h"
+#include "models/ncnn/det3.id.h"
+#include "models/ncnn/det3.mem.h"
 bool cmpScore(FaceBox lsh, FaceBox rsh) {
 	if (lsh.score < rsh.score)
 		return true;
@@ -14,9 +19,11 @@ bool cmpArea(FaceBox lsh, FaceBox rsh) {
 	else
 		return true;
 }
-
-MTCNN::MTCNN(const string &model_path="./models") {
-
+MTCNN::MTCNN() {
+	printf("MTCNN construct\n");
+};
+void MTCNN::Initialize(const string &model_path="./models") {
+	//printf("model path %s", model_path.c_str());
 	vector<string> param_files = {
 		model_path+"/det1.param",
 		model_path+"/det2.param",
@@ -28,13 +35,13 @@ MTCNN::MTCNN(const string &model_path="./models") {
 		model_path+"/det2.bin",
 		model_path+"/det3.bin"
 	};
+	Pnet.load_param(det1_param_bin);
+	Pnet.load_model(det1_bin);
+	Rnet.load_param(det2_param_bin);
+	Rnet.load_model(det2_bin);
+	Onet.load_param(det3_param_bin);
+	Onet.load_model(det3_bin);
 
-	Pnet.load_param(param_files[0].data());
-	Pnet.load_model(bin_files[0].data());
-	Rnet.load_param(param_files[1].data());
-	Rnet.load_model(bin_files[1].data());
-	Onet.load_param(param_files[2].data());
-	Onet.load_model(bin_files[2].data());
 }
 
 MTCNN::~MTCNN(){
@@ -234,10 +241,10 @@ void MTCNN::PNet(float scale)
 	ncnn::Extractor ex = Pnet.create_extractor();
 	ex.set_light_mode(true);
 	//sex.set_num_threads(4);
-	ex.input("data", in);
+	ex.input(det1_param_id::BLOB_data, in);
 	ncnn::Mat score_, location_;
-	ex.extract("prob1", score_);
-	ex.extract("conv4-2", location_);
+	ex.extract(det1_param_id::BLOB_prob1, score_);
+	ex.extract(det1_param_id::BLOB_conv4_2, location_);
 	vector<FaceBox> boundingBox_;
 
 	generateFaceBox(score_, location_, boundingBox_, scale);
@@ -267,10 +274,10 @@ void MTCNN::PNet(){
         ncnn::Extractor ex = Pnet.create_extractor();
         //ex.set_num_threads(2);
         ex.set_light_mode(true);
-        ex.input("data", in);
+        ex.input(det1_param_id::BLOB_data, in);
         ncnn::Mat score_, location_;
-        ex.extract("prob1", score_);
-        ex.extract("conv4-2", location_);
+        ex.extract(det1_param_id::BLOB_prob1, score_);
+        ex.extract(det1_param_id::BLOB_conv4_2, location_);
         vector<FaceBox> boundingBox_;
         generateFaceBox(score_, location_, boundingBox_, scales_[i]);
         nms(boundingBox_, nms_threshold[0]);
@@ -290,10 +297,10 @@ void MTCNN::RNet(){
         ncnn::Extractor ex = Rnet.create_extractor();
 		//ex.set_num_threads(2);
         ex.set_light_mode(true);
-        ex.input("data", in);
+        ex.input(det2_param_id::BLOB_data, in);
         ncnn::Mat score, FaceBox;
-        ex.extract("prob1", score);
-        ex.extract("conv5-2", FaceBox);
+        ex.extract(det2_param_id::BLOB_prob1, score);
+        ex.extract(det2_param_id::BLOB_conv5_2, FaceBox);
 		if ((float)score[1] > threshold[1]) {
 			for (int channel = 0; channel<4; channel++) {
 				it->regreCoord[channel] = (float)FaceBox[channel];//*(FaceBox.data+channel*FaceBox.cstep);
@@ -312,9 +319,9 @@ float MTCNN::rnet(ncnn::Mat& img) {
 	const float norm_vals[3] = { 1.0 / 127.5, 1.0 / 127.5, 1.0 / 127.5 };
 	img.substract_mean_normalize(mean_vals, norm_vals);
 	ex.set_light_mode(true);
-	ex.input("data", img);
+	ex.input(det2_param_id::BLOB_data, img);
 	ncnn::Mat score;
-	ex.extract("prob1", score);
+	ex.extract(det2_param_id::BLOB_prob1, score);
 	return (float)score[1];
 }
 
@@ -328,11 +335,11 @@ void MTCNN::ONet(){
         ncnn::Extractor ex = Onet.create_extractor();
 		//ex.set_num_threads(2);
         ex.set_light_mode(true);
-        ex.input("data", in);
+        ex.input(det3_param_id::BLOB_data, in);
         ncnn::Mat score, FaceBox, keyPoint;
-        ex.extract("prob1", score);
-        ex.extract("conv6-2", FaceBox);
-        ex.extract("conv6-3", keyPoint);
+        ex.extract(det3_param_id::BLOB_prob1, score);
+        ex.extract(det3_param_id::BLOB_conv6_2, FaceBox);
+        ex.extract(det3_param_id::BLOB_conv6_3, keyPoint);
 		if ((float)score[1] > threshold[2]) {
 			for (int channel = 0; channel < 4; channel++) {
 				it->regreCoord[channel] = (float)FaceBox[channel];
@@ -357,11 +364,11 @@ FaceBox MTCNN::onet(ncnn::Mat& img, int x, int y, int w, int h) {
 	ncnn::Extractor ex = Onet.create_extractor();
 
 	ex.set_light_mode(true);
-	ex.input("data", img);
+	ex.input(det3_param_id::BLOB_data, img);
 	ncnn::Mat score, FaceBox, keyPoint;
-	ex.extract("prob1", score);
-	ex.extract("conv6-2", FaceBox);
-	ex.extract("conv6-3", keyPoint);
+    ex.extract(det3_param_id::BLOB_prob1, score);
+    ex.extract(det3_param_id::BLOB_conv6_2, FaceBox);
+    ex.extract(det3_param_id::BLOB_conv6_3, keyPoint);
 	faceFaceBox.score = score.channel(1)[0];
 	faceFaceBox.x1 = static_cast<int>(FaceBox[0] * w) + x;
 	faceFaceBox.y1 = static_cast<int>(FaceBox[1] * h) + y;

@@ -16,7 +16,8 @@ using namespace std;
 class MTCNN {
 
 public:
-	MTCNN(const string &model_path);
+	MTCNN();
+	void Initialize(const string &model_path);
 	~MTCNN();
 
 	void SetMinFace(int minSize);
