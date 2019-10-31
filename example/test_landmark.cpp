@@ -18,7 +18,7 @@ void test_video_cameral() {
 	{
 		return;
 	}
-	std::vector<Bbox> faces;
+	std::vector<FaceBox> faces;
 	while (cap.isOpened()) {
 		cap >> frame;
 		if (frame.empty()) {
@@ -51,7 +51,7 @@ void test_image() {
 		printf("The End\n");
 		return;
 	}
-	std::vector<Bbox> faces;
+	std::vector<FaceBox> faces;
 	int64 ticbegin = cv::getTickCount();
 	ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR2RGB, frame.cols, frame.rows);
 	mt->detect(ncnn_img, faces);
@@ -61,7 +61,7 @@ void test_image() {
 	drawFaces(frame, faces);
 	int64 ticend = cv::getTickCount();
 	printf("detection time used %f\n", (ticend - ticbegin) / cv::getTickFrequency());
-	cv::imwrite("../../data/IU_mark.jpg", frame);
+	//cv::imwrite("../../data/IU_mark.jpg", frame);
 	cv::imshow("image", frame);
 	char key = cv::waitKey(0);
 	if (key == 27) {

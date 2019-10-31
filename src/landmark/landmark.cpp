@@ -8,13 +8,13 @@ landmark::landmark()
 	_landmark_net.load_param(param_file.c_str());
 	_landmark_net.load_model(bin_file.c_str());
 }
-void landmark::get_landmark(const cv::Mat& image, std::vector<Bbox> &faces) {
+void landmark::get_landmark(const cv::Mat& image, std::vector<FaceBox> &faces) {
 	_image = image;
 	int img_w = image.cols;
 	int img_h = image.rows;
 	for (int i = 0; i < faces.size(); i++)
 	{
-		Bbox bb = faces[i];
+		FaceBox bb = faces[i];
 		faces[i].numpts = 112;
 		cv::Rect face_rect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1);
 		cv::Mat img_face = _image(face_rect).clone();

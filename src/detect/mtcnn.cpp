@@ -1,14 +1,14 @@
 #include <cmath>
 #include "mtcnn.h"
 
-bool cmpScore(Bbox lsh, Bbox rsh) {
+bool cmpScore(FaceBox lsh, FaceBox rsh) {
 	if (lsh.score < rsh.score)
 		return true;
 	else
 		return false;
 }
 
-bool cmpArea(Bbox lsh, Bbox rsh) {
+bool cmpArea(FaceBox lsh, FaceBox rsh) {
 	if (lsh.area < rsh.area)
 		return false;
 	else
@@ -47,28 +47,28 @@ void MTCNN::SetMinFace(int minSize){
 	minsize = minSize;
 }
 
-void MTCNN::generateBbox(ncnn::Mat score, ncnn::Mat location, vector<Bbox>& boundingBox_, float scale){
+void MTCNN::generateFaceBox(ncnn::Mat score, ncnn::Mat location, vector<FaceBox>& boundingBox_, float scale){
     const int stride = 2;
     const int cellsize = 12;
     //score p
     float *p = score.channel(1);//score.data + score.cstep;
     //float *plocal = location.data;
-    Bbox bbox;
+    FaceBox FaceBox;
     float inv_scale = 1.0f/scale;
     for(int row=0;row<score.h;row++){
         for(int col=0;col<score.w;col++){
             if(*p>threshold[0]){
-                bbox.score = *p;
-                bbox.x1 = round((stride*col+1)*inv_scale);
-                bbox.y1 = round((stride*row+1)*inv_scale);
-                bbox.x2 = round((stride*col+1+cellsize)*inv_scale);
-                bbox.y2 = round((stride*row+1+cellsize)*inv_scale);
-                bbox.area = (bbox.x2 - bbox.x1) * (bbox.y2 - bbox.y1);
+                FaceBox.score = *p;
+                FaceBox.x1 = round((stride*col+1)*inv_scale);
+                FaceBox.y1 = round((stride*row+1)*inv_scale);
+                FaceBox.x2 = round((stride*col+1+cellsize)*inv_scale);
+                FaceBox.y2 = round((stride*row+1+cellsize)*inv_scale);
+                FaceBox.area = (FaceBox.x2 - FaceBox.x1) * (FaceBox.y2 - FaceBox.y1);
                 const int index = row * score.w + col;
                 for(int channel=0;channel<4;channel++){
-                    bbox.regreCoord[channel]=location.channel(channel)[index];
+                    FaceBox.regreCoord[channel]=location.channel(channel)[index];
                 }
-                boundingBox_.push_back(bbox);
+                boundingBox_.push_back(FaceBox);
             }
             p++;
             //plocal++;
@@ -76,7 +76,7 @@ void MTCNN::generateBbox(ncnn::Mat score, ncnn::Mat location, vector<Bbox>& boun
     }
 }
 
-void MTCNN::nmsTwoBoxs(vector<Bbox>& boundingBox_, vector<Bbox>& previousBox_, const float overlap_threshold, string modelname)
+void MTCNN::nmsTwoBoxs(vector<FaceBox>& boundingBox_, vector<FaceBox>& previousBox_, const float overlap_threshold, string modelname)
 {
 	if (boundingBox_.empty()) {
 		return;
@@ -88,8 +88,8 @@ void MTCNN::nmsTwoBoxs(vector<Bbox>& boundingBox_, vector<Bbox>& previousBox_, c
 	float minX = 0;
 	float minY = 0;
 	//cout << boundingBox_.size() << " ";
-	for (vector<Bbox>::iterator ity = previousBox_.begin(); ity != previousBox_.end(); ity++) {
-		for (vector<Bbox>::iterator itx = boundingBox_.begin(); itx != boundingBox_.end();) {
+	for (vector<FaceBox>::iterator ity = previousBox_.begin(); ity != previousBox_.end(); ity++) {
+		for (vector<FaceBox>::iterator itx = boundingBox_.begin(); itx != boundingBox_.end();) {
 			int i = itx - boundingBox_.begin();
 			int j = ity - previousBox_.begin();
 			maxX = max(boundingBox_.at(i).x1, previousBox_.at(j).x1);
@@ -99,7 +99,7 @@ void MTCNN::nmsTwoBoxs(vector<Bbox>& boundingBox_, vector<Bbox>& previousBox_, c
 			//maxX1 and maxY1 reuse
 			maxX = ((minX - maxX + 1)>0) ? (minX - maxX + 1) : 0;
 			maxY = ((minY - maxY + 1)>0) ? (minY - maxY + 1) : 0;
-			//IOU reuse for the area of two bbox
+			//IOU reuse for the area of two FaceBox
 			IOU = maxX * maxY;
 			if (!modelname.compare("Union"))
 				IOU = IOU / (boundingBox_.at(i).area + previousBox_.at(j).area - IOU);
@@ -118,7 +118,7 @@ void MTCNN::nmsTwoBoxs(vector<Bbox>& boundingBox_, vector<Bbox>& previousBox_, c
 	//cout << boundingBox_.size() << endl;
 }
 
-void MTCNN::nms(vector<Bbox> &boundingBox_, const float overlap_threshold, string modelname){
+void MTCNN::nms(vector<FaceBox> &boundingBox_, const float overlap_threshold, string modelname){
     if(boundingBox_.empty()){
         return;
     }
@@ -149,7 +149,7 @@ void MTCNN::nms(vector<Bbox> &boundingBox_, const float overlap_threshold, strin
             //maxX1 and maxY1 reuse 
             maxX = ((minX-maxX+1)>0)? (minX-maxX+1) : 0;
             maxY = ((minY-maxY+1)>0)? (minY-maxY+1) : 0;
-            //IOU reuse for the area of two bbox
+            //IOU reuse for the area of two FaceBox
             IOU = maxX * maxY;
             if(!modelname.compare("Union"))
                 IOU = IOU/(boundingBox_.at(it_idx).area + boundingBox_.at(last).area - IOU);
@@ -165,7 +165,7 @@ void MTCNN::nms(vector<Bbox> &boundingBox_, const float overlap_threshold, strin
     }
     
     vPick.resize(nPick);
-    vector<Bbox> tmp_;
+    vector<FaceBox> tmp_;
     tmp_.resize(nPick);
     for(int i = 0; i < nPick; i++){
         tmp_[i] = boundingBox_[vPick[i]];
@@ -173,15 +173,15 @@ void MTCNN::nms(vector<Bbox> &boundingBox_, const float overlap_threshold, strin
     boundingBox_ = tmp_;
 }
 
-void MTCNN::refine(vector<Bbox> &vecBbox, const int &height, const int &width, bool square){
-    if(vecBbox.empty()){
-        cout<<"Bbox is empty!!"<<endl;
+void MTCNN::refine(vector<FaceBox> &vecFaceBox, const int &height, const int &width, bool square){
+    if(vecFaceBox.empty()){
+        cout<<"FaceBox is empty!!"<<endl;
         return;
     }
     float bbw=0, bbh=0, maxSide=0;
     float h = 0, w = 0;
     float x1=0, y1=0, x2=0, y2=0;
-    for(vector<Bbox>::iterator it=vecBbox.begin(); it!=vecBbox.end();it++){
+    for(vector<FaceBox>::iterator it=vecFaceBox.begin(); it!=vecFaceBox.end();it++){
         bbw = (*it).x2 - (*it).x1 + 1;
         bbh = (*it).y2 - (*it).y1 + 1;
         x1 = (*it).x1 + (*it).regreCoord[0]*bbw;
@@ -213,13 +213,13 @@ void MTCNN::refine(vector<Bbox> &vecBbox, const int &height, const int &width, b
     }
 }
 
-void MTCNN::extractMaxFace(vector<Bbox>& boundingBox_)
+void MTCNN::extractMaxFace(vector<FaceBox>& boundingBox_)
 {
 	if (boundingBox_.empty()) {
 		return;
 	}
 	sort(boundingBox_.begin(), boundingBox_.end(), cmpArea);
-	for (vector<Bbox>::iterator itx = boundingBox_.begin() + 1; itx != boundingBox_.end();) {
+	for (vector<FaceBox>::iterator itx = boundingBox_.begin() + 1; itx != boundingBox_.end();) {
 		itx = boundingBox_.erase(itx);
 	}
 }
@@ -238,17 +238,17 @@ void MTCNN::PNet(float scale)
 	ncnn::Mat score_, location_;
 	ex.extract("prob1", score_);
 	ex.extract("conv4-2", location_);
-	vector<Bbox> boundingBox_;
+	vector<FaceBox> boundingBox_;
 
-	generateBbox(score_, location_, boundingBox_, scale);
+	generateFaceBox(score_, location_, boundingBox_, scale);
 	nms(boundingBox_, nms_threshold[0]);
 
-	firstBbox_.insert(firstBbox_.end(), boundingBox_.begin(), boundingBox_.end());
+	firstFaceBox_.insert(firstFaceBox_.end(), boundingBox_.begin(), boundingBox_.end());
 	boundingBox_.clear();
 }
 
 void MTCNN::PNet(){
-    firstBbox_.clear();
+    firstFaceBox_.clear();
     float minl = img_w < img_h? img_w: img_h;
     float m = (float)MIN_DET_SIZE/minsize;
     minl *= m;
@@ -271,18 +271,18 @@ void MTCNN::PNet(){
         ncnn::Mat score_, location_;
         ex.extract("prob1", score_);
         ex.extract("conv4-2", location_);
-        vector<Bbox> boundingBox_;
-        generateBbox(score_, location_, boundingBox_, scales_[i]);
+        vector<FaceBox> boundingBox_;
+        generateFaceBox(score_, location_, boundingBox_, scales_[i]);
         nms(boundingBox_, nms_threshold[0]);
-        firstBbox_.insert(firstBbox_.end(), boundingBox_.begin(), boundingBox_.end());
+        firstFaceBox_.insert(firstFaceBox_.end(), boundingBox_.begin(), boundingBox_.end());
         boundingBox_.clear();
     }
 }
 
 void MTCNN::RNet(){
-    secondBbox_.clear();
+    secondFaceBox_.clear();
     int count = 0;
-    for(vector<Bbox>::iterator it=firstBbox_.begin(); it!=firstBbox_.end();it++){
+    for(vector<FaceBox>::iterator it=firstFaceBox_.begin(); it!=firstFaceBox_.end();it++){
         ncnn::Mat tempIm;
         copy_cut_border(img, tempIm, (*it).y1, img_h-(*it).y2, (*it).x1, img_w-(*it).x2);
         ncnn::Mat in;
@@ -291,16 +291,16 @@ void MTCNN::RNet(){
 		//ex.set_num_threads(2);
         ex.set_light_mode(true);
         ex.input("data", in);
-        ncnn::Mat score, bbox;
+        ncnn::Mat score, FaceBox;
         ex.extract("prob1", score);
-        ex.extract("conv5-2", bbox);
+        ex.extract("conv5-2", FaceBox);
 		if ((float)score[1] > threshold[1]) {
 			for (int channel = 0; channel<4; channel++) {
-				it->regreCoord[channel] = (float)bbox[channel];//*(bbox.data+channel*bbox.cstep);
+				it->regreCoord[channel] = (float)FaceBox[channel];//*(FaceBox.data+channel*FaceBox.cstep);
 			}
 			it->area = (it->x2 - it->x1)*(it->y2 - it->y1);
 			it->score = score.channel(1)[0];//*(score.data+score.cstep);
-			secondBbox_.push_back(*it);
+			secondFaceBox_.push_back(*it);
 		}
     }
 }
@@ -319,8 +319,8 @@ float MTCNN::rnet(ncnn::Mat& img) {
 }
 
 void MTCNN::ONet(){
-    thirdBbox_.clear();
-    for(vector<Bbox>::iterator it=secondBbox_.begin(); it!=secondBbox_.end();it++){
+    thirdFaceBox_.clear();
+    for(vector<FaceBox>::iterator it=secondFaceBox_.begin(); it!=secondFaceBox_.end();it++){
         ncnn::Mat tempIm;
         copy_cut_border(img, tempIm, (*it).y1, img_h-(*it).y2, (*it).x1, img_w-(*it).x2);
         ncnn::Mat in;
@@ -329,13 +329,13 @@ void MTCNN::ONet(){
 		//ex.set_num_threads(2);
         ex.set_light_mode(true);
         ex.input("data", in);
-        ncnn::Mat score, bbox, keyPoint;
+        ncnn::Mat score, FaceBox, keyPoint;
         ex.extract("prob1", score);
-        ex.extract("conv6-2", bbox);
+        ex.extract("conv6-2", FaceBox);
         ex.extract("conv6-3", keyPoint);
 		if ((float)score[1] > threshold[2]) {
 			for (int channel = 0; channel < 4; channel++) {
-				it->regreCoord[channel] = (float)bbox[channel];
+				it->regreCoord[channel] = (float)FaceBox[channel];
 			}
 			it->area = (it->x2 - it->x1) * (it->y2 - it->y1);
 			it->score = score.channel(1)[0];
@@ -343,14 +343,14 @@ void MTCNN::ONet(){
 				(it->ppoint)[num] = it->x1 + (it->x2 - it->x1) * keyPoint[num];
 				(it->ppoint)[num + 5] = it->y1 + (it->y2 - it->y1) * keyPoint[num + 5];
 			}
-			thirdBbox_.push_back(*it);
+			thirdFaceBox_.push_back(*it);
 		}
     }
 }
 
-Bbox MTCNN::onet(ncnn::Mat& img, int x, int y, int w, int h) {
+FaceBox MTCNN::onet(ncnn::Mat& img, int x, int y, int w, int h) {
 
-	Bbox faceBbox;
+	FaceBox faceFaceBox;
 	const float mean_vals[3] = { 127.5f, 127.5f, 127.5f };
 	const float norm_vals[3] = { 1.0 / 127.5, 1.0 / 127.5, 1.0 / 127.5 };
 	img.substract_mean_normalize(mean_vals, norm_vals);
@@ -358,25 +358,25 @@ Bbox MTCNN::onet(ncnn::Mat& img, int x, int y, int w, int h) {
 
 	ex.set_light_mode(true);
 	ex.input("data", img);
-	ncnn::Mat score, bbox, keyPoint;
+	ncnn::Mat score, FaceBox, keyPoint;
 	ex.extract("prob1", score);
-	ex.extract("conv6-2", bbox);
+	ex.extract("conv6-2", FaceBox);
 	ex.extract("conv6-3", keyPoint);
-	faceBbox.score = score.channel(1)[0];
-	faceBbox.x1 = static_cast<int>(bbox[0] * w) + x;
-	faceBbox.y1 = static_cast<int>(bbox[1] * h) + y;
-	faceBbox.x2 = static_cast<int>(bbox[2] * w) + h + x;
-	faceBbox.y2 = static_cast<int>(bbox[3] * h) + h + y;
+	faceFaceBox.score = score.channel(1)[0];
+	faceFaceBox.x1 = static_cast<int>(FaceBox[0] * w) + x;
+	faceFaceBox.y1 = static_cast<int>(FaceBox[1] * h) + y;
+	faceFaceBox.x2 = static_cast<int>(FaceBox[2] * w) + h + x;
+	faceFaceBox.y2 = static_cast<int>(FaceBox[3] * h) + h + y;
 	for (int num = 0; num<5; num++) {
-		(faceBbox.ppoint)[num] = x + w * keyPoint[num];
-		(faceBbox.ppoint)[num + 5] = y + h * keyPoint[num + 5];
+		(faceFaceBox.ppoint)[num] = x + w * keyPoint[num];
+		(faceFaceBox.ppoint)[num + 5] = y + h * keyPoint[num + 5];
 	}
 
-	return faceBbox;
+	return faceFaceBox;
 	
 }
 
-void MTCNN::detect(ncnn::Mat& img_, vector<Bbox>& finalBbox_){
+void MTCNN::detect(ncnn::Mat& img_, vector<FaceBox>& finalFaceBox_){
     img = img_;
     img_w = img.w;
     img_h = img.h;
@@ -384,37 +384,37 @@ void MTCNN::detect(ncnn::Mat& img_, vector<Bbox>& finalBbox_){
 
     PNet();
     //the first stage's nms
-    if(firstBbox_.size() < 1) return;
-    nms(firstBbox_, nms_threshold[0]);
-    refine(firstBbox_, img_h, img_w, true);
-    //printf("firstBbox_.size()=%d\n", firstBbox_.size());
+    if(firstFaceBox_.size() < 1) return;
+    nms(firstFaceBox_, nms_threshold[0]);
+    refine(firstFaceBox_, img_h, img_w, true);
+    //printf("firstFaceBox_.size()=%d\n", firstFaceBox_.size());
 
 
     //second stage
     RNet();
-    //printf("secondBbox_.size()=%d\n", secondBbox_.size());
-    if(secondBbox_.size() < 1) return;
-    nms(secondBbox_, nms_threshold[1]);
-    refine(secondBbox_, img_h, img_w, true);
+    //printf("secondFaceBox_.size()=%d\n", secondFaceBox_.size());
+    if(secondFaceBox_.size() < 1) return;
+    nms(secondFaceBox_, nms_threshold[1]);
+    refine(secondFaceBox_, img_h, img_w, true);
 
     //third stage 
     ONet();
-    //printf("thirdBbox_.size()=%d\n", thirdBbox_.size());
-    if(thirdBbox_.size() < 1) return;
-    refine(thirdBbox_, img_h, img_w, true);
-    nms(thirdBbox_, nms_threshold[2], "Min");
-    finalBbox_ = thirdBbox_;
+    //printf("thirdFaceBox_.size()=%d\n", thirdFaceBox_.size());
+    if(thirdFaceBox_.size() < 1) return;
+    refine(thirdFaceBox_, img_h, img_w, true);
+    nms(thirdFaceBox_, nms_threshold[2], "Min");
+    finalFaceBox_ = thirdFaceBox_;
 	if (smooth)
-		SmoothBbox(finalBbox_);
+		SmoothFaceBox(finalFaceBox_);
 }
 
-void MTCNN::detectMaxFace(ncnn::Mat& img_, vector<Bbox>& finalBbox) {
-	firstPreviousBbox_.clear();
-	secondPreviousBbox_.clear();
-	thirdPrevioussBbox_.clear();
-	firstBbox_.clear();
-	secondBbox_.clear();
-	thirdBbox_.clear();
+void MTCNN::detectMaxFace(ncnn::Mat& img_, vector<FaceBox>& finalFaceBox) {
+	firstPreviousFaceBox_.clear();
+	secondPreviousFaceBox_.clear();
+	thirdPrevioussFaceBox_.clear();
+	firstFaceBox_.clear();
+	secondFaceBox_.clear();
+	thirdFaceBox_.clear();
 
 	//norm
 	img = img_;
@@ -441,52 +441,52 @@ void MTCNN::detectMaxFace(ncnn::Mat& img_, vector<Bbox>& finalBbox) {
 	{
 		//first stage
 		PNet(scales_[i]);
-		nms(firstBbox_, nms_threshold[0]);
-		nmsTwoBoxs(firstBbox_, firstPreviousBbox_, nms_threshold[0]);
-		if (firstBbox_.size() < 1) {
-			firstBbox_.clear();
+		nms(firstFaceBox_, nms_threshold[0]);
+		nmsTwoBoxs(firstFaceBox_, firstPreviousFaceBox_, nms_threshold[0]);
+		if (firstFaceBox_.size() < 1) {
+			firstFaceBox_.clear();
 			continue;
 		}
-		firstPreviousBbox_.insert(firstPreviousBbox_.end(), firstBbox_.begin(), firstBbox_.end());
-		refine(firstBbox_, img_h, img_w, true);
-		//printf("firstBbox_.size()=%d\n", firstBbox_.size());
+		firstPreviousFaceBox_.insert(firstPreviousFaceBox_.end(), firstFaceBox_.begin(), firstFaceBox_.end());
+		refine(firstFaceBox_, img_h, img_w, true);
+		//printf("firstFaceBox_.size()=%d\n", firstFaceBox_.size());
 
 		//second stage
 		RNet();
-		nms(secondBbox_, nms_threshold[1]);
-		nmsTwoBoxs(secondBbox_, secondPreviousBbox_, nms_threshold[0]);
-		secondPreviousBbox_.insert(secondPreviousBbox_.end(), secondBbox_.begin(), secondBbox_.end());
-		if (secondBbox_.size() < 1) {
-			firstBbox_.clear();
-			secondBbox_.clear();
+		nms(secondFaceBox_, nms_threshold[1]);
+		nmsTwoBoxs(secondFaceBox_, secondPreviousFaceBox_, nms_threshold[0]);
+		secondPreviousFaceBox_.insert(secondPreviousFaceBox_.end(), secondFaceBox_.begin(), secondFaceBox_.end());
+		if (secondFaceBox_.size() < 1) {
+			firstFaceBox_.clear();
+			secondFaceBox_.clear();
 			continue;
 		}
-		refine(secondBbox_, img_h, img_w, true);
+		refine(secondFaceBox_, img_h, img_w, true);
 
 		//third stage
 		ONet();
 
-		if (thirdBbox_.size() < 1) {
-			firstBbox_.clear();
-			secondBbox_.clear();
-			thirdBbox_.clear();
+		if (thirdFaceBox_.size() < 1) {
+			firstFaceBox_.clear();
+			secondFaceBox_.clear();
+			thirdFaceBox_.clear();
 			continue;
 		}
-		refine(thirdBbox_, img_h, img_w, true);
-		nms(thirdBbox_, nms_threshold[2], "Min");
+		refine(thirdFaceBox_, img_h, img_w, true);
+		nms(thirdFaceBox_, nms_threshold[2], "Min");
 
-		if (thirdBbox_.size() > 0) {
-			extractMaxFace(thirdBbox_);
-			finalBbox = thirdBbox_;//if largest face size is similar,.
+		if (thirdFaceBox_.size() > 0) {
+			extractMaxFace(thirdFaceBox_);
+			finalFaceBox = thirdFaceBox_;//if largest face size is similar,.
 			if (smooth)
-				SmoothBbox(finalBbox);
+				SmoothFaceBox(finalFaceBox);
 			break;
 		}
 	}
 
 }
 
-float MTCNN::iou(Bbox & b1, Bbox & b2, string modelname)
+float MTCNN::iou(FaceBox & b1, FaceBox & b2, string modelname)
 {
 	float IOU = 0;
 	float maxX = 0;
@@ -510,28 +510,28 @@ float MTCNN::iou(Bbox & b1, Bbox & b2, string modelname)
 	return IOU;
 }
 
-void MTCNN::SmoothBbox(std::vector<Bbox>& finalBbox)
+void MTCNN::SmoothFaceBox(std::vector<FaceBox>& finalFaceBox)
 {
-	static std::vector<Bbox> preBbox_;
-	for (int i = 0; i < finalBbox.size(); i++) {
-		for (int j = 0; j < preBbox_.size(); j++) {
-			if (iou(finalBbox[i], preBbox_[j]) > 0.90)
+	static std::vector<FaceBox> preFaceBox_;
+	for (int i = 0; i < finalFaceBox.size(); i++) {
+		for (int j = 0; j < preFaceBox_.size(); j++) {
+			if (iou(finalFaceBox[i], preFaceBox_[j]) > 0.90)
 			{
-				finalBbox[i] = preBbox_[j];
+				finalFaceBox[i] = preFaceBox_[j];
 			}
-			else if (iou(finalBbox[i], preBbox_[j]) > 0.6) {
-				finalBbox[i].x1 = (finalBbox[i].x1 + preBbox_[j].x1) / 2;
-				finalBbox[i].y1 = (finalBbox[i].y1 + preBbox_[j].y1) / 2;
-				finalBbox[i].x2 = (finalBbox[i].x2 + preBbox_[j].x2) / 2;
-				finalBbox[i].y2 = (finalBbox[i].y2 + preBbox_[j].y2) / 2;
-				//finalBbox[i].area = (finalBbox[i].x2 - finalBbox[i].x1)*(finalBbox[i].y2 - finalBbox[i].y1);
+			else if (iou(finalFaceBox[i], preFaceBox_[j]) > 0.6) {
+				finalFaceBox[i].x1 = (finalFaceBox[i].x1 + preFaceBox_[j].x1) / 2;
+				finalFaceBox[i].y1 = (finalFaceBox[i].y1 + preFaceBox_[j].y1) / 2;
+				finalFaceBox[i].x2 = (finalFaceBox[i].x2 + preFaceBox_[j].x2) / 2;
+				finalFaceBox[i].y2 = (finalFaceBox[i].y2 + preFaceBox_[j].y2) / 2;
+				//finalFaceBox[i].area = (finalFaceBox[i].x2 - finalFaceBox[i].x1)*(finalFaceBox[i].y2 - finalFaceBox[i].y1);
 				for (int k = 0; k < 10; k++)
 				{
-					finalBbox[i].ppoint[k] = (finalBbox[i].ppoint[k] + preBbox_[j].ppoint[k]) / 2;
+					finalFaceBox[i].ppoint[k] = (finalFaceBox[i].ppoint[k] + preFaceBox_[j].ppoint[k]) / 2;
 				}
 			}
 		}
 	}
-	preBbox_ = finalBbox;
+	preFaceBox_ = finalFaceBox;
 
 }

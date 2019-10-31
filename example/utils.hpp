@@ -5,7 +5,7 @@
 using std::string;
 #define M_PI 3.1415926
 
-inline void drawFace(cv::Mat& img, const Bbox& face, const cv::Scalar& color = cv::Scalar(255, 0, 0)) {
+inline void drawFace(cv::Mat& img, const FaceBox& face, const cv::Scalar& color = cv::Scalar(255, 0, 0)) {
 	//printf("%f %f %f %f\n", face.xmin, face.ymin, face.xmax, face.ymax);
 	cv::Rect rect(face.x1, face.y1, face.x2 - face.x1, face.y2 - face.y1);
 	//printf("face %f, %f %f %f\n", face.xmin, face.ymin, face.xmax - face.xmin, face.ymax - face.ymin);
@@ -20,7 +20,7 @@ inline void drawFace(cv::Mat& img, const Bbox& face, const cv::Scalar& color = c
 	cv::putText(img, angletext, cv::Point(face.x1, face.y1-10), cv::FONT_HERSHEY_TRIPLEX, 1, cv::Scalar(0, 0, 255), 1, 8);
 }
 
-inline void drawFaces(cv::Mat& img, const std::vector<Bbox>& faces, const cv::Scalar& color = cv::Scalar(255, 0, 0)) {
+inline void drawFaces(cv::Mat& img, const std::vector<FaceBox>& faces, const cv::Scalar& color = cv::Scalar(255, 0, 0)) {
 	for (auto& face : faces) {
 		drawFace(img, face, color);
 	}

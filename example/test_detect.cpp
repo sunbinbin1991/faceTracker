@@ -17,7 +17,7 @@ void test_video_cameral() {
 	{
 		return;
 	}
-	std::vector<Bbox> faces;
+	std::vector<FaceBox> faces;
 	while (cap.isOpened()) {
 		cap >> frame;
 		if (frame.empty()) {

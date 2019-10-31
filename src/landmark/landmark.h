@@ -13,7 +13,7 @@ class landmark
 public:
     landmark();
 
-	void get_landmark(const cv::Mat& image,std::vector<Bbox> &faces);
+	void get_landmark(const cv::Mat& image,std::vector<FaceBox> &faces);
 
     ~landmark();
 private:

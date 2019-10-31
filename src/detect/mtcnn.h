@@ -20,20 +20,20 @@ public:
 	~MTCNN();
 
 	void SetMinFace(int minSize);
-	void detect(ncnn::Mat& img_, std::vector<Bbox>& finalBbox);
-	void detectMaxFace(ncnn::Mat& img_, std::vector<Bbox>& finalBbox);
+	void detect(ncnn::Mat& img_, std::vector<FaceBox>& finalFaceBox);
+	void detectMaxFace(ncnn::Mat& img_, std::vector<FaceBox>& finalFaceBox);
 	float rnet(ncnn::Mat& img);
-	Bbox onet(ncnn::Mat& img,int x, int y,int w,int h);
+	FaceBox onet(ncnn::Mat& img,int x, int y,int w,int h);
 		
 	//void detection(const cv::Mat& img, std::vector<cv::Rect>& rectangles);
 private:
-	void generateBbox(ncnn::Mat score, ncnn::Mat location, vector<Bbox>& boundingBox_, float scale);
-	void nmsTwoBoxs(vector<Bbox> &boundingBox_, vector<Bbox> &previousBox_, const float overlap_threshold, string modelname = "Union");
-	void nms(vector<Bbox> &boundingBox_, const float overlap_threshold, string modelname = "Union");
-	void refine(vector<Bbox> &vecBbox, const int &height, const int &width, bool square);
-	void extractMaxFace(vector<Bbox> &boundingBox_);
-	float iou(Bbox & b1, Bbox & b2, string modelname = "Union");
-	void SmoothBbox(std::vector<Bbox>& winList);
+	void generateFaceBox(ncnn::Mat score, ncnn::Mat location, vector<FaceBox>& boundingBox_, float scale);
+	void nmsTwoBoxs(vector<FaceBox> &boundingBox_, vector<FaceBox> &previousBox_, const float overlap_threshold, string modelname = "Union");
+	void nms(vector<FaceBox> &boundingBox_, const float overlap_threshold, string modelname = "Union");
+	void refine(vector<FaceBox> &vecFaceBox, const int &height, const int &width, bool square);
+	void extractMaxFace(vector<FaceBox> &boundingBox_);
+	float iou(FaceBox & b1, FaceBox & b2, string modelname = "Union");
+	void SmoothFaceBox(std::vector<FaceBox>& winList);
 	void PNet(float scale);
 	void PNet();
 	void RNet();
@@ -45,8 +45,8 @@ private:
 	const float mean_vals[3] = { 127.5, 127.5, 127.5 };
 	const float norm_vals[3] = { 0.0078125, 0.0078125, 0.0078125 };
 	const int MIN_DET_SIZE = 12;
-	std::vector<Bbox> firstPreviousBbox_, secondPreviousBbox_, thirdPrevioussBbox_;
-	std::vector<Bbox> firstBbox_, secondBbox_, thirdBbox_;
+	std::vector<FaceBox> firstPreviousFaceBox_, secondPreviousFaceBox_, thirdPrevioussFaceBox_;
+	std::vector<FaceBox> firstFaceBox_, secondFaceBox_, thirdFaceBox_;
 	int img_w, img_h;
 
 private:
@@ -54,7 +54,7 @@ private:
 	const float threshold[3] = { 0.8f, 0.8f, 0.9f };
 	int minsize = 48;
 	const float pre_facetor = 0.7090f;
-	bool smooth = true;//ÎÈ¶¨ÐÔ
+	bool smooth = true;//ï¿½È¶ï¿½ï¿½ï¿½
 };
 
 
