@@ -22,19 +22,7 @@ bool cmpArea(FaceBox lsh, FaceBox rsh) {
 MTCNN::MTCNN() {
 	printf("MTCNN construct\n");
 };
-void MTCNN::Initialize(const string &model_path="./models") {
-	//printf("model path %s", model_path.c_str());
-	vector<string> param_files = {
-		model_path+"/det1.param",
-		model_path+"/det2.param",
-		model_path+"/det3.param"
-	};
-
-	vector<string> bin_files = {
-		model_path+"/det1.bin",
-		model_path+"/det2.bin",
-		model_path+"/det3.bin"
-	};
+void MTCNN::Initialize() {
 	Pnet.load_param(det1_param_bin);
 	Pnet.load_model(det1_bin);
 	Rnet.load_param(det2_param_bin);

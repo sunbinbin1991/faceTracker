@@ -2,15 +2,14 @@
 #include "../example/utils.hpp"
 track::track(/* args */)
 {
-	bool flagtemp = m_flag.load();
-	printf("%d\n", flagtemp);
 	m_detector = std::unique_ptr<MTCNN>(new MTCNN());
+	init_detector();
 }
 
 track::~track() = default;
 
 void track::init_detector() {
-	m_detector->Initialize("D:/git/track/faceTracker/src/detect/models/ncnn");	
+	m_detector->Initialize();	
 	//m_detector->Initialize("../../src/detect/models/ncnn");
 	//../../src/detect/models/ncnn
 }

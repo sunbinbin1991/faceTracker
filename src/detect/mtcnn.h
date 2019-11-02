@@ -17,7 +17,7 @@ class MTCNN {
 
 public:
 	MTCNN();
-	void Initialize(const string &model_path);
+	void Initialize();
 	~MTCNN();
 
 	void SetMinFace(int minSize);

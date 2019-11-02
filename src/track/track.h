@@ -11,12 +11,11 @@ class track
 public:
     track();
     ~track();
-
-	//detect related init
-	void init_detector();
-
 	void tracking(const cv::Mat& frame);
 
+private :
+	//detect related init	
+	void init_detector();
 
 private:
 	cv::Mat m_curr_frame;
