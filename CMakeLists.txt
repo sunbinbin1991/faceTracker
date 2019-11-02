@@ -3,8 +3,9 @@ cmake_minimum_required(VERSION 2.8)
 project(tracker)
   
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_CXX_STANDARD 14)
 if(CMAKE_COMPILER_IS_GNUCXX)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wextra -pedantic -Wno-long-long")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wextra -pedantic -Wno-long-long")
 endif()
 
 #find opencv lib
@@ -21,7 +22,7 @@ if (OPENMP_FOUND)
 endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/debug)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/release)
 
 #add common ref
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

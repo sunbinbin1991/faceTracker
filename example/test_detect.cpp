@@ -10,7 +10,7 @@
 void test_video_cameral() {
 	string model_path = "../../src/detect/models/ncnn";
 	MTCNN * mt = new MTCNN();
-	mt->Initialize(model_path);
+	mt->Initialize();
 
 	cv::Mat frame;
 	cv::VideoCapture cap(0);

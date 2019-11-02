@@ -1,4 +1,7 @@
 #pragma once
+#include <vector>
+#include <string>
+
 struct FaceBox
 {
 	float score;
@@ -13,44 +16,49 @@ struct FaceBox
 	int numpts;
 };
 
-class FaceTrack {
-
+//frame Info
+class FaceTrack {	
 
 public:
 	int id_;
 	FaceBox bbox_;
-	float score_;
+	int existsTimes_ = 0;
+	int age_ = 0;
+	FaceTrack() {};
 
 	FaceTrack(int id, const FaceBox& rect) 
 	: id_(id)
-	, bbox_(rect)
-	, score_(1){}
+	, bbox_(rect){}
 };
-namespace Shape {
 
-	template <typename T> class Rect {
-	public:
-		Rect() {}
-		Rect(T x, T y, T w, T h) {
-			this->x = x;
-			this->y = y;
-			this->width = w;
-			height = h;
+typedef std::vector<FaceTrack> regions_t;
 
-		}
-		T x;
-		T y;
-		T width;
-		T height;
 
-		cv::Rect convert_cv_rect(int _height, int _width)
-		{
-			cv::Rect Rect_(static_cast<int>(x*_width), static_cast<int>(y*_height),
-				static_cast<int>(width*_width), static_cast<int>(height*_height));
-			return Rect_;
-		}
-	};
-}
+// namespace Shape {
+
+// 	template <typename T> class Rect {
+// 	public:
+// 		Rect() {}
+// 		Rect(T x, T y, T w, T h) {
+// 			this->x = x;
+// 			this->y = y;
+// 			this->width = w;
+// 			height = h;
+
+// 		}
+// 		T x;
+// 		T y;
+// 		T width;
+// 		T height;
+
+// 		cv::Rect convert_cv_rect(int _height, int _width)
+// 		{
+// 			cv::Rect Rect_(static_cast<int>(x*_width), static_cast<int>(y*_height),
+// 				static_cast<int>(width*_width), static_cast<int>(height*_height));
+// 			return Rect_;
+// 		}
+// 	};
+// }
 
 
 namespace tracking
