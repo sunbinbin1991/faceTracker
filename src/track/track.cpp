@@ -81,7 +81,7 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 
 		for (auto &trk : m_tracks)
 		{
-			printf("age = %d time = %d", trk.age_, trk.existsTimes_);
+			//printf("age = %d time = %d", trk.age_, trk.existsTimes_);
 		}
 
 	}
@@ -96,16 +96,3 @@ void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
 	regs.assign(std::begin(m_tracks), std::end(m_tracks));
 }
 
-void tracker::DrawTracks(cv::Mat& frame) {
-
-	for (const FaceTrack& ftrk : m_tracks) {
-		FaceBox box = ftrk.bbox_;
-		drawFace(frame, box);
-		sprintf(idtext, "ID %d", ftrk.id_);
-		//sprintf(angletext, "%d %d %d", int(ftrk.bbox_.angles[0]), int(ftrk.bbox_.angles[1]), int(ftrk.bbox_.angles[2]));
-		//sprintf(scoretext, "score %f", ftrk.bbox_.score);
-		//cv::putText(frame, scoretext, cv::Point(box.x1, box.y1 - 80), cv::FONT_HERSHEY_TRIPLEX, 1, cv::Scalar(0, 0, 255), 1, 8);
-		cv::putText(frame, idtext, cv::Point(box.x1, box.y1 - 40), cv::FONT_HERSHEY_TRIPLEX, 1, cv::Scalar(0, 0, 255), 1, 8);
-		//cv::putText(frame, angletext, cv::Point(box.x1, box.y1), cv::FONT_HERSHEY_TRIPLEX, 1, cv::Scalar(0, 0, 255), 1, 8);
-	}
-}

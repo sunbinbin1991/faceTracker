@@ -26,6 +26,15 @@ inline void drawFaces(cv::Mat& img, const std::vector<FaceBox>& faces, const cv:
 	}
 }
 
+inline void DrawTracks(cv::Mat& frame,regions_t m_tracks) {
+	char idtext[256];
+	for (const FaceTrack& ftrk : m_tracks) {
+		FaceBox box = ftrk.bbox_;
+		drawFace(frame, box);
+		sprintf(idtext, "ID %d", ftrk.id_);
+		cv::putText(frame, idtext, cv::Point(box.x1, box.y1 - 40), cv::FONT_HERSHEY_TRIPLEX, 1, cv::Scalar(0, 0, 255), 1, 8);
+	}
+}
 
 inline cv::Point2f get_point(const float* landmarks, int i) {
 	return cv::Point2f(landmarks[2 * i], landmarks[2 * i + 1]);

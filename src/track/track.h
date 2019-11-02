@@ -41,7 +41,7 @@ private :
 
 	char angletext[256];
 	char scoretext[256];
-	char idtext[256];
+
 private:
 	std::thread detectionThread;
 

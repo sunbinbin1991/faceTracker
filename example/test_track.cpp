@@ -25,7 +25,7 @@ void test_video_cameral() {
 			break;
 		}
 		tk.TrackingSyncProcess(frame, tracks);
-		tk.DrawTracks(frame);
+		DrawTracks(frame, tracks);
 		cv::imshow("image", frame);
 		char key = cv::waitKey(1);
 		if (key == 27) {
@@ -44,6 +44,7 @@ void test_image() {
 		return;
 	}
 	tk.TrackingSyncProcess(frame, tracks);
+
 	std::vector<FaceBox> faces;
 
 }
