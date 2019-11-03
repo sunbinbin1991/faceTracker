@@ -30,9 +30,9 @@ ncnn Windows Vs2015 Win64
 
 ## 注意事项
 
-1：运行时依赖的动态库，需要拷贝到可行性文件同级目录，或是参考如下目录添加环境变量：https://blog.csdn.net/guyuealian/article/details/79412644
+1：运行时依赖的动态库，需要拷贝到可执行文件同级目录，或是参考如下目录添加环境变量：https://blog.csdn.net/guyuealian/article/details/79412644
 
 Todo：
-
-1：跟踪模块完善；
+- [x] 1：跟踪模块完善；3/11/2019
+- [] 2：跟踪模块优化；
 
