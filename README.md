@@ -13,11 +13,11 @@ ncnn Windows Vs2015 Win64
 ![test](https://github.com/sunbinbin1991/faceTracker/blob/master/data/IU_mark.jpg?raw=true)
 
 ## 引用
-[HyperFT](https://github.com/zeusees/HyperFT)：参考部分代码架构
+[HyperFT](https://github.com/zeusees/HyperFT)：参考部分代码模块
 
 [ZQCNN](https://github.com/zuoqing1988/ZQCNN):包含人脸识别系统常用组件模型库，并带有加速；
 
-[ncnn_example](git@github.com:MirrorYuChen/ncnn_example.git)：包含部分模型转换文件
+[ncnn_example](https://github.com/MirrorYuChen/ncnn_example)：包含部分模型转换文件
 
 编译方步骤：
 
@@ -34,5 +34,5 @@ ncnn Windows Vs2015 Win64
 
 Todo：
 - [x] 跟踪模块完善；3/11/2019
-- [ ] 跟踪模块优化；
+- [] 跟踪模块优化；
 
