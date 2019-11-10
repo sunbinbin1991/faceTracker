@@ -31,7 +31,7 @@ public:
 	, bbox_(rect){}
 };
 
-typedef std::vector<FaceTrack> regions_t;
+using regions_t = std::vector<FaceTrack>;
 
 
 // namespace Shape {
