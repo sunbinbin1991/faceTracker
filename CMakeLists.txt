@@ -8,6 +8,9 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wextra -pedantic -Wno-long-long")
 endif()
 
+#SET(CMAKE_BUILD_TYPE DEBUG)  
+#SET(CMAKE_BUILD_TYPE RELEASE)  
+
 #find opencv lib
 set(OpenCV_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opencv/x64/vc14/lib)
 set(OpenCV_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opencv/include) 
@@ -21,8 +24,10 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+# add 3rdparty
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/release)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/debug)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/concurrentqueue)
 
 #add common ref
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -27,7 +27,8 @@ public:
     ~tracker();
 	
 	void TrackingSyncProcess(const cv::Mat& frame, regions_t& regs);
-	void DrawTracks(cv::Mat& frame);
+
+	void TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs);
 
 private :
 	//detect related init	
@@ -36,6 +37,8 @@ private :
 	void Detecting(const cv::Mat& frame, regions_t& regs);
 	void Tracking(const cv::Mat& frame, const regions_t& regs);
 	
+	void DetectThreading();
+
 	FrameInfo m_frameInfo[2];
 	//draw related
 

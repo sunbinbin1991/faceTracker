@@ -89,6 +89,7 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 
 void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
 	regions_t curr_detections;
+	
 	Detecting(frame, curr_detections);
 	
 	Tracking(frame, curr_detections);
@@ -96,3 +97,4 @@ void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
 	regs.assign(std::begin(m_tracks), std::end(m_tracks));
 }
 
+//void tracker::DetectThreading

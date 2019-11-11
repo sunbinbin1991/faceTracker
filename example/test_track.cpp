@@ -7,6 +7,9 @@
 #include "../src/landmark/landmark.h"
 #include "../src/track/track.h"
 #include "utils.hpp"
+#include "concurrentqueue.h"
+
+using namespace moodycamel;
 
 void test_video_cameral() {
 	tracker tk;
@@ -24,7 +27,9 @@ void test_video_cameral() {
 			printf("The End\n");
 			break;
 		}
+		//
 		tk.TrackingSyncProcess(frame, tracks);
+
 		DrawTracks(frame, tracks);
 		cv::imshow("image", frame);
 		char key = cv::waitKey(1);
@@ -49,9 +54,24 @@ void test_image() {
 
 }
 
+void test_concurrentqueue() {
+	ConcurrentQueue<int> q;
+
+	for (int i = 0; i != 123; ++i)
+		q.enqueue(i);
+
+	int item;
+	for (int i = 0; i != 123; ++i) {
+		q.try_dequeue(item);
+		assert(item == i);
+	}
+
+}
 
 int main(){
-	test_video_cameral();
+	//test_video_cameral();
 	//test_image();
+
+	test_concurrentqueue();
 	printf("hello world\n");
 }
