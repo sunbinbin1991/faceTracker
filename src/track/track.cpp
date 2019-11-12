@@ -10,7 +10,7 @@ tracker::tracker()
 	InitDetector();
 
 	//m_flag = true;
-	
+
 	queue_images = std::make_unique<ConcurrentQueue<cv::Mat>>(max_queue_num);
 	printf("\thello world %d\n", m_flag);
 	//detectionThread.();
@@ -111,16 +111,16 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 		detectionThread = std::thread(&tracker::DetectThreading, this);
 		printf("new thread %d\n", m_flag);
 	}
+	regions_t trackers;
 	cv::Mat cloned = frame.clone();
-	queue_images->enqueue(cloned);
-
-	if (!curr_dets.empty()) {
-		regs.assign(curr_dets.begin(), curr_dets.end());
+	if (queue_images->size_approx() < 1) {
+		queue_images->enqueue(cloned);
 	}
+	if (!curr_dets.empty()) {
+		Tracking(frame, curr_dets);
+	}	
 
-
-	//printf("TrackingAsyncProcess %d\n", m_flag);
-	//printf("hello world TrackingAsyncProcess");
+	regs.assign(m_tracks.begin(), m_tracks.end());
 }
 
 void tracker::DetectThreading() {

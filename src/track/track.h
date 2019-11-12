@@ -67,7 +67,7 @@ private:
 	bool isFirstTimeRun = false;
 
 	std::unique_ptr <ConcurrentQueue<cv::Mat>> queue_images;
-	int max_queue_num = 10;
+	size_t max_queue_num = 10;
 
 	regions_t curr_dets;
 
