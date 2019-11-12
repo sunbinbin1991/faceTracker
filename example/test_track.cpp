@@ -12,6 +12,8 @@
 using namespace moodycamel;
 
 void test_video_cameral() {
+
+	//std::unique_ptr<tracker> tk = std::unique_ptr<tracker>(new tracker());
 	tracker tk;
 	cv::Mat frame;
 	regions_t tracks;
@@ -28,7 +30,8 @@ void test_video_cameral() {
 			break;
 		}
 		//
-		tk.TrackingSyncProcess(frame, tracks);
+		//tk.TrackingSyncProcess(frame, tracks);
+		tk.TrackingAsyncProcess(frame, tracks);
 
 		DrawTracks(frame, tracks);
 		cv::imshow("image", frame);
@@ -69,9 +72,9 @@ void test_concurrentqueue() {
 }
 
 int main(){
-	//test_video_cameral();
+	test_video_cameral();
 	//test_image();
 
-	test_concurrentqueue();
+	//test_concurrentqueue();
 	printf("hello world\n");
 }

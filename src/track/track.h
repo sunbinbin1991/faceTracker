@@ -5,6 +5,7 @@
 #include <condition_variable>
 
 #include "opencv2/opencv.hpp"
+#include "concurrentqueue.h"
 
 #include "common.h"
 #include "../detect/mtcnn.h"
@@ -19,6 +20,8 @@ typedef struct FrameInfo
 	std::mutex m_mutex;
 	bool m_captured = false;
 }FrameInfo;
+
+using namespace moodycamel;
 
 class tracker
 {
@@ -54,11 +57,19 @@ private:
 	cv::Mat m_curr_frame;
 	ncnn::Mat m_detect_buffer;
 
-	std::atomic<bool> m_flag = ATOMIC_VAR_INIT(false);
 	std::unique_ptr<MTCNN> m_detector;
 	std::unique_ptr<CTracker> m_tracker;
 	size_t m_trackID = 0;
 	regions_t m_tracks;
+
+	std::atomic<bool> m_flag = ATOMIC_VAR_INIT(false);
+	int thread_num = 1;
+	bool isFirstTimeRun = false;
+
+	std::unique_ptr <ConcurrentQueue<cv::Mat>> queue_images;
+	int max_queue_num = 10;
+
+	regions_t curr_dets;
 
 // tracking strategy 0 : KCF
 	

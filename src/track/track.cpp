@@ -3,16 +3,23 @@
 #include "track.h"
 #include "../example/utils.hpp"
 
+//构造函数中为什么不能初始化线程
 tracker::tracker()
 {
 	m_detector = std::unique_ptr<MTCNN>(new MTCNN());
 	InitDetector();
 
-	//detectionThread = std::thread(&tracker::Detecting, this);
-
+	//m_flag = true;
+	
+	queue_images = std::make_unique<ConcurrentQueue<cv::Mat>>(max_queue_num);
+	printf("\thello world %d\n", m_flag);
+	//detectionThread.();
 }
 
-tracker::~tracker() = default;
+tracker::~tracker() {
+	m_flag = false;
+	detectionThread.join();
+};
 
 void tracker::InitDetector() {
 	if (!m_isDetectorInitialized) {
@@ -97,4 +104,32 @@ void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
 	regs.assign(std::begin(m_tracks), std::end(m_tracks));
 }
 
-//void tracker::DetectThreading
+void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
+	if (!isFirstTimeRun) {
+		m_flag = true;
+		isFirstTimeRun = true;
+		detectionThread = std::thread(&tracker::DetectThreading, this);
+		printf("new thread %d\n", m_flag);
+	}
+	cv::Mat cloned = frame.clone();
+	queue_images->enqueue(cloned);
+
+	if (!curr_dets.empty()) {
+		regs.assign(curr_dets.begin(), curr_dets.end());
+	}
+
+
+	//printf("TrackingAsyncProcess %d\n", m_flag);
+	//printf("hello world TrackingAsyncProcess");
+}
+
+void tracker::DetectThreading() {
+	while (m_flag) {
+		cv::Mat img(480,640,CV_8UC3);
+		printf("before size of queue %d\n", queue_images->size_approx());
+		if (queue_images->try_dequeue(img)) {
+			Detecting(img, curr_dets);
+	
+		}
+	}
+}
