@@ -7,6 +7,7 @@
 tracker::tracker()
 {
 	m_detector = std::unique_ptr<MTCNN>(new MTCNN());
+	m_landmark = std::unique_ptr<landmark>(new landmark());
 	InitDetector();
 
 	//m_flag = true;
