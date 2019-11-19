@@ -50,6 +50,23 @@ void tracker::Detecting(const cv::Mat& frame, regions_t& regs) {
 	//printf("detection time used %f\n", (ticend - ticbegin) / cv::getTickFrequency());
 };
 
+void tracker::Detecting(const cv::Mat& frame, std::vector<FaceBox>& regs) {
+	m_curr_frame = frame.clone();
+	if (m_curr_frame.empty()) {
+		printf("The End\n");
+		return;
+	}
+	if (m_isDetectorInitialized) {
+		InitDetector();
+	}
+	std::vector<FaceBox> faces;
+	int64 ticbegin = cv::getTickCount();
+	m_detect_buffer = ncnn::Mat::from_pixels(m_curr_frame.data, ncnn::Mat::PIXEL_BGR2RGB, m_curr_frame.cols, m_curr_frame.rows);
+	m_detector->detect(m_detect_buffer, regs);
+	int64 ticend = cv::getTickCount();
+	//printf("detection time used %f\n", (ticend - ticbegin) / cv::getTickFrequency());
+};
+
 void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 	if (m_tracks.empty()) {
 		for (const auto& reg : regs)
@@ -95,6 +112,7 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 }
 
 void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
+	
 	regions_t curr_detections;
 	
 	Detecting(frame, curr_detections);
@@ -114,11 +132,23 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	regions_t trackers;
 	cv::Mat cloned = frame.clone();
 	if (queue_images->size_approx() < 1) {
+		printf("enqueue size of queue %d\n", queue_images->size_approx());
 		queue_images->enqueue(cloned);
 	}
+
 	if (!curr_dets.empty()) {
-		Tracking(frame, curr_dets);
-	}	
+		m_landmark->get_landmark(cloned.clone(), curr_dets);
+	}
+
+	regions_t curr_tracks;
+	curr_tracks.resize(curr_dets.size());
+	for (size_t i = 0; i < curr_dets.size(); i++)
+	{
+		curr_tracks[i].bbox_ = curr_dets[i];
+	}
+	if (!curr_tracks.empty()) {
+		Tracking(cloned, curr_tracks);
+	}
 
 	regs.assign(m_tracks.begin(), m_tracks.end());
 }
@@ -126,10 +156,11 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 void tracker::DetectThreading() {
 	while (m_flag) {
 		cv::Mat img(480,640,CV_8UC3);
-		printf("before size of queue %d\n", queue_images->size_approx());
+		printf("before size of queue %d,m_flag =%d\n", queue_images->size_approx(), m_flag);
 		if (queue_images->try_dequeue(img)) {
 			Detecting(img, curr_dets);
-	
+						
+			printf("try_dequeue size of queue %d\n", queue_images->size_approx());
 		}
 	}
 }

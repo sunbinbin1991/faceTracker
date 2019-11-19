@@ -1,3 +1,4 @@
+#pragma once;
 #include "net.h"
 #include <opencv2/opencv.hpp>
 #include <string>
@@ -23,7 +24,7 @@ private:
 	const float mean_vals[3] = { 127.5f, 127.5f, 127.5f };
 	const float norm_vals[3] = { 0.0078125f, 0.0078125f, 0.0078125f };
 
-	cv::Mat _image;
+
 	
 
 };

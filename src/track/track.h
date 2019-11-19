@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "../detect/mtcnn.h"
+#include "../landmark/landmark.h"
 #include "ctracker.h"
 
 typedef struct FrameInfo
@@ -38,6 +39,9 @@ private :
 	void InitDetector();
 	
 	void Detecting(const cv::Mat& frame, regions_t& regs);
+
+	void Detecting(const cv::Mat& frame, std::vector<FaceBox>& regs);
+
 	void Tracking(const cv::Mat& frame, const regions_t& regs);
 	
 	void DetectThreading();
@@ -58,6 +62,7 @@ private:
 	ncnn::Mat m_detect_buffer;
 
 	std::unique_ptr<MTCNN> m_detector;
+	std::unique_ptr<landmark> m_landmark;
 	std::unique_ptr<CTracker> m_tracker;
 	size_t m_trackID = 0;
 	regions_t m_tracks;
@@ -69,7 +74,10 @@ private:
 	std::unique_ptr <ConcurrentQueue<cv::Mat>> queue_images;
 	size_t max_queue_num = 10;
 
-	regions_t curr_dets;
+	std::vector<FaceBox> curr_dets;
+
+	//
+
 
 // tracking strategy 0 : KCF
 	

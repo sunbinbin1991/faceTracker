@@ -9,9 +9,10 @@ landmark::landmark()
 	_landmark_net.load_model(bin_file.c_str());
 }
 void landmark::get_landmark(const cv::Mat& image, std::vector<FaceBox> &faces) {
-	_image = image;
-	int img_w = image.cols;
-	int img_h = image.rows;
+	cv::Mat _image;
+	_image = image.clone();
+	int img_w = _image.cols;
+	int img_h = _image.rows;
 	for (int i = 0; i < faces.size(); i++)
 	{
 		FaceBox bb = faces[i];
@@ -35,6 +36,4 @@ void landmark::get_landmark(const cv::Mat& image, std::vector<FaceBox> &faces) {
 	}
 }
 
-landmark::~landmark()
-{
-}
+landmark::~landmark() = default;
