@@ -42,8 +42,8 @@ void test_video_cameral() {
 }
 
 void test_image() {
-	string model_path = "../../src/detect/models/ncnn";
-	MTCNN  mt = MTCNN();
+	MTCNN * mt = new MTCNN();
+	mt->Initialize();
 	landmark lk;
 	
 	cv::Mat frame;
@@ -55,10 +55,8 @@ void test_image() {
 	std::vector<FaceBox> faces;
 	int64 ticbegin = cv::getTickCount();
 	ncnn::Mat ncnn_img = ncnn::Mat::from_pixels(frame.data, ncnn::Mat::PIXEL_BGR2RGB, frame.cols, frame.rows);
-	mt.detect(ncnn_img, faces);
-
+	mt->detect(ncnn_img, faces);
 	lk.get_landmark(frame, faces);
-
 	drawFaces(frame, faces);
 	int64 ticend = cv::getTickCount();
 	printf("detection time used %f\n", (ticend - ticbegin) / cv::getTickFrequency());
