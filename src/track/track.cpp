@@ -83,15 +83,15 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 			{
 				FaceTrack tempTrk = reg;
 				std::pair<int, float> ious(0, 0.);
-				m_tracker->CalculateIOUs(tempTrk.bbox_, m_tracks, ious);
+				c_tracker->CalculateIOUs(tempTrk.bbox_, m_tracks, ious);
 				if (ious.second < 0.2) {					
 					//iou<0.5 add new track
 					tempTrk.id_ = m_trackID++; 
-					m_tracker->AddNewTracks(tempTrk, m_tracks);
+					c_tracker->AddNewTracks(tempTrk, m_tracks);
 				}
 				else {	
 					//iou>0.5 merge with previous track
-					m_tracker->UpdateTracks(tempTrk, m_tracks[ious.first]);
+					c_tracker->UpdateTracks(tempTrk, m_tracks[ious.first]);
 					m_tracks[ious.first].existsTimes_++;
 				}
 			}
@@ -102,7 +102,7 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 		{
 			trk.age_++;
 		}
-		m_tracker->DeleteLostTracks(m_tracks);
+		c_tracker->DeleteLostTracks(m_tracks);
 
 		for (auto &trk : m_tracks)
 		{
@@ -137,8 +137,26 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 		queue_images->enqueue(cloned);
 	}
 
-	if (!curr_dets.empty()) {
-		m_landmark->get_landmark(cloned.clone(), curr_dets);
+	std::vector<FaceBox> curr_dets;
+	if (m_det_ready) {
+		curr_dets = buffer_dets;
+		m_landmark->get_landmark(cloned, curr_dets);
+		m_det_ready = false;
+	}
+	else {
+		if (!m_tracks.empty()) {
+			std::vector<FaceBox> prev_dets;
+			prev_dets.resize(m_tracks.size());
+			for (size_t i = 0; i < m_tracks.size(); i++)
+			{
+				prev_dets[i] = m_tracks[i].bbox_;
+			}
+			m_landmark->get_landmark(cloned, prev_dets);
+			c_tracker->Landmark2Box(prev_dets, curr_dets);
+			printf("hell0");
+		} else{
+			return;
+		}	
 	}
 
 	regions_t curr_tracks;
@@ -159,7 +177,16 @@ void tracker::DetectThreading() {
 		cv::Mat img(480,640,CV_8UC3);
 		printf("before size of queue %d,m_flag =%d\n", queue_images->size_approx(), m_flag);
 		if (queue_images->try_dequeue(img)) {
-			Detecting(img, curr_dets);						
+			std::vector<FaceBox> temp_dets;
+			Detecting(img, temp_dets);
+			if (!temp_dets.empty()) {
+				buffer_dets = temp_dets;
+				m_det_ready = true;
+			}
+			else {
+				buffer_dets.clear();
+				m_det_ready = false;
+			}
 			printf("try_dequeue size of queue %d\n", queue_images->size_approx());
 		}
 	}

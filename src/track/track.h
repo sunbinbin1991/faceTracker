@@ -63,18 +63,19 @@ private:
 
 	std::unique_ptr<MTCNN> m_detector;
 	std::unique_ptr<landmark> m_landmark;
-	std::unique_ptr<CTracker> m_tracker;
+	std::unique_ptr<CTracker> c_tracker;
 	size_t m_trackID = 0;
 	regions_t m_tracks;
 
 	std::atomic<bool> m_flag = ATOMIC_VAR_INIT(false);
+	std::atomic<bool> m_det_ready =  ATOMIC_VAR_INIT(false);
 	int thread_num = 1;
 	bool isFirstTimeRun = false;
 
 	std::unique_ptr <ConcurrentQueue<cv::Mat>> queue_images;
 	size_t max_queue_num = 10;
 
-	std::vector<FaceBox> curr_dets;
+	std::vector<FaceBox> buffer_dets;
 
 	//
 

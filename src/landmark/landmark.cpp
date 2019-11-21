@@ -16,7 +16,7 @@ void landmark::get_landmark(const cv::Mat& image, std::vector<FaceBox> &faces) {
 	for (int i = 0; i < faces.size(); i++)
 	{
 		FaceBox bb = faces[i];
-		faces[i].numpts = 112;
+		faces[i].numpts = 106;
 		cv::Rect face_rect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1);
 
 		int new_x1 = bb.x1 - (bb.x2 - bb.x1)*0.2;

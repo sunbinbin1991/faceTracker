@@ -30,6 +30,26 @@ void CTracker::CalculateIOUs(FaceBox box1, const regions_t& tracks, std::pair<in
 	}
 }
 
+void CTracker::Landmark2Box(const std::vector<FaceBox>& boxes1, std::vector<FaceBox> boxes2) {
+	boxes2.resize(boxes1.size());
+	for (size_t j = 0; j < boxes1.size(); j++)
+	{
+		boxes2[j] = boxes1[j];
+		boxes2[j].x1 = 1e5;
+		boxes2[j].y1 = 1e5;
+		boxes2[j].x2 = -1e5;
+		boxes2[j].y2 = -1e5;
+		for (size_t i = 0; i <boxes1[j].numpts; i++)
+		{
+			boxes2[j].x1 = std::min((int)(boxes1[j].ppoint[2 * i]), boxes2[j].x1);
+			boxes2[j].y1 = std::min((int)(boxes1[j].ppoint[2 * i + 1]), boxes2[j].y1);
+			boxes2[j].x2 = std::max((int)(boxes1[j].ppoint[2 * i]), boxes2[j].x2);
+			boxes2[j].y2 = std::max((int)(boxes1[j].ppoint[2 * i + 1]), boxes2[j].y2);
+		}
+	}
+	
+}
+
 void CTracker::AddNewTracks(FaceTrack& faceTrack, regions_t& tracks) {
 	faceTrack.existsTimes_++;
 	tracks.push_back(faceTrack);
