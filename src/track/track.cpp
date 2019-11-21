@@ -159,8 +159,7 @@ void tracker::DetectThreading() {
 		cv::Mat img(480,640,CV_8UC3);
 		printf("before size of queue %d,m_flag =%d\n", queue_images->size_approx(), m_flag);
 		if (queue_images->try_dequeue(img)) {
-			Detecting(img, curr_dets);
-						
+			Detecting(img, curr_dets);						
 			printf("try_dequeue size of queue %d\n", queue_images->size_approx());
 		}
 	}
