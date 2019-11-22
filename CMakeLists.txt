@@ -26,7 +26,7 @@ endif()
 
 # add 3rdparty
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/include)
-link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/release)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/ncnn/debug)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/concurrentqueue)
 
 #add common ref
