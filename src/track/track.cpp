@@ -138,7 +138,7 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	}
 
 	std::vector<FaceBox> curr_dets;
-	if (m_det_ready) {
+	if (m_det_ready&&(!buffer_dets.empty())) {
 		curr_dets = buffer_dets;
 		m_landmark->get_landmark(cloned, curr_dets);
 		m_det_ready = false;

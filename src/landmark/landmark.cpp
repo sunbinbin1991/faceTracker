@@ -19,10 +19,10 @@ void landmark::get_landmark(const cv::Mat& image, std::vector<FaceBox> &faces) {
 		faces[i].numpts = 106;
 		cv::Rect face_rect(bb.x1, bb.y1, bb.x2 - bb.x1, bb.y2 - bb.y1);
 
-		int new_x1 = bb.x1 - (bb.x2 - bb.x1)*0.2;
-		int new_y1 = bb.y1 - (bb.y2 - bb.y1)*0.2;
-		int new_x2 = bb.x2 + (bb.x2 - bb.x1)*0.2;
-		int new_y2 = bb.y2 + (bb.y2 - bb.y1)*0.2;
+		int new_x1 = std::fmax(bb.x1 - (bb.x2 - bb.x1)*0.2,0);
+		int new_y1 = std::fmax(bb.y1 - (bb.y2 - bb.y1)*0.2,0);
+		int new_x2 = std::fmin(bb.x2 + (bb.x2 - bb.x1)*0.2,image.cols);
+		int new_y2 = std::fmin(bb.y2 + (bb.y2 - bb.y1)*0.2,image.rows);
 
 		cv::Rect new_face_rect(new_x1, new_y1, new_x2 - new_x1, new_y2 - new_y1);
 
