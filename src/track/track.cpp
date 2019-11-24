@@ -3,7 +3,7 @@
 #include "track.h"
 #include "../example/utils.hpp"
 
-//构造函数中为什么不能初始化线程
+//构造函数中为什么不能初始化线程?
 tracker::tracker()
 {
 	m_detector = std::unique_ptr<MTCNN>(new MTCNN());
@@ -108,7 +108,6 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 		{
 			//printf("age = %d time = %d", trk.age_, trk.existsTimes_);
 		}
-
 	}
 }
 
@@ -141,19 +140,31 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	if (m_det_ready&&(!buffer_dets.empty())) {
 		curr_dets = buffer_dets;
 		m_landmark->get_landmark(cloned, curr_dets);
+		c_tracker->Landmark2Box(curr_dets, curr_dets);
 		m_det_ready = false;
 	}
 	else {
 		if (!m_tracks.empty()) {
 			std::vector<FaceBox> prev_dets;
+			std::vector<FaceBox> predcit_dets;
 			prev_dets.resize(m_tracks.size());
 			for (size_t i = 0; i < m_tracks.size(); i++)
 			{
 				prev_dets[i] = m_tracks[i].bbox_;
 			}
+			//1: use history trks to get origin kpts
 			m_landmark->get_landmark(cloned, prev_dets);
-			c_tracker->Landmark2Box(prev_dets, curr_dets);
-			printf("hell0");
+			
+			//2: use history kpts to get new kpts
+			PredictKptsByOptflow(cloned, prev_dets, predcit_dets);
+
+			c_tracker->Landmark2Box(predcit_dets, curr_dets);
+
+			printBoxs(prev_dets);
+			printf("hell0\n");
+			printBoxs(curr_dets);
+			printf("hell1\n");
+			//printTrks(m_tracks);
 		} else{
 			return;
 		}	
@@ -169,6 +180,7 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 		Tracking(cloned, curr_tracks);
 	}
 
+	cv::cvtColor(cloned, m_prev_gray, cv::COLOR_BGR2GRAY);
 	regs.assign(m_tracks.begin(), m_tracks.end());
 }
 
@@ -182,6 +194,7 @@ void tracker::DetectThreading() {
 			if (!temp_dets.empty()) {
 				buffer_dets = temp_dets;
 				m_det_ready = true;
+				//m_flag = false;
 			}
 			else {
 				buffer_dets.clear();
@@ -191,3 +204,73 @@ void tracker::DetectThreading() {
 		}
 	}
 }
+
+void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<FaceBox>& prev_boxes, std::vector<FaceBox>& predict_box) {
+	cv::Mat frame_clone = frame.clone();
+	if (m_prev_gray.empty()) {
+		cv::cvtColor(frame_clone, m_prev_gray, cv::COLOR_BGR2GRAY);
+	}	
+
+	cv::Mat curr_frame_gray;
+	cv::cvtColor(frame_clone, curr_frame_gray, cv::COLOR_BGR2GRAY);
+
+	std::vector<cv::Point2f> prev_points;
+	std::vector<cv::Point2f> predict_points;
+	
+	for (size_t i = 0; i < prev_boxes.size(); i++)
+	{
+		FaceBox temp = prev_boxes[i];
+
+		for (size_t j = 0; j < temp.numpts; j++)
+		{
+			cv::Point2f tmpPoint;
+			tmpPoint.x = temp.ppoint[2 * j];
+			tmpPoint.y = temp.ppoint[2 * j+1];
+			prev_points.push_back(tmpPoint);
+		}
+	}
+	predict_points.reserve(prev_points.size());
+	//cv::imshow("prev", m_prev_gray);
+	//cv::imshow("curr", curr_frame_gray);
+	std::vector<uchar> status;
+	std::vector<float> err;
+	int windowsize = 21;
+	//cv::TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
+	cv::TermCriteria termcrit(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 0, 0.001);
+	cv::calcOpticalFlowPyrLK(m_prev_gray, curr_frame_gray, prev_points, predict_points, status, err,
+		cv::Size(windowsize, windowsize), 3,termcrit);
+	
+	printf("res %d %d \n", status.size(), err.size());
+
+	for (size_t i = 0; i < prev_boxes.size(); i++)
+	{
+		FaceBox temp;
+		int numpts_num = prev_boxes[i].numpts;
+		temp.numpts = numpts_num;
+		predict_box.push_back(temp);
+		for (size_t j = 0; j < numpts_num; j++)
+		{
+			if (status[i*numpts_num + j]) {
+				predict_box[i].ppoint[2 * j] = predict_points[i*numpts_num + j].x;
+				predict_box[i].ppoint[2 * j + 1] = predict_points[i*numpts_num + j].y;
+			}
+			else {
+				predict_box[i].ppoint[2 * j] = prev_points[i*numpts_num + j].x;
+				predict_box[i].ppoint[2 * j+1] = prev_points[i*numpts_num + j+1].y;
+			}
+		}
+	}
+
+	//printf("\n");
+	//for (auto & itr : status)
+	//{
+	//	printf("status %d ", itr);
+	//}
+	//printf("\n");
+	//m_prev_frame = curr_frame_gray;
+	//cv::calcOpticalFlowPyrLK(m_prev_frame, curr_frame_gray, prev_points, predict_points, status, err,
+	//	cv::Size(windowsize, windowsize), 3,
+	//	cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 0, 0.001));
+
+
+};

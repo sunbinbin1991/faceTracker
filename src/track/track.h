@@ -46,6 +46,8 @@ private :
 	
 	void DetectThreading();
 
+	void PredictKptsByOptflow(const cv::Mat & frame,const std::vector<FaceBox>& prev_box1, std::vector<FaceBox>& predict_box);
+
 	FrameInfo m_frameInfo[2];
 	//draw related
 
@@ -58,6 +60,7 @@ private:
 	bool m_isTrackerInitialized = false;
 	bool m_isDetectorInitialized = false;
 	
+	cv::Mat m_prev_gray;
 	cv::Mat m_curr_frame;
 	ncnn::Mat m_detect_buffer;
 
@@ -77,7 +80,7 @@ private:
 
 	std::vector<FaceBox> buffer_dets;
 
-	//
+	
 
 
 // tracking strategy 0 : KCF

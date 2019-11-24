@@ -13,7 +13,7 @@ struct FaceBox
 	float ppoint[256];
 	float regreCoord[4];
 	float angles[3];
-	int numpts;
+	int numpts = 106;
 };
 
 //frame Info
