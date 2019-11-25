@@ -68,6 +68,7 @@ void tracker::Detecting(const cv::Mat& frame, std::vector<FaceBox>& regs) {
 	//printf("detection time used %f\n", (ticend - ticbegin) / cv::getTickFrequency());
 };
 
+//simple tracking matching two rects by iou
 void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 	if (m_tracks.empty()) {
 		for (const auto& reg : regs)
@@ -131,44 +132,49 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	}
 	regions_t trackers;
 	cv::Mat cloned = frame.clone();
+
 	if (queue_images->size_approx() < 1) {
 		printf("enqueue size of queue %d\n", queue_images->size_approx());
 		queue_images->enqueue(cloned);
 	}
 
 	std::vector<FaceBox> curr_dets;
+	bool noNeedGetLandmark = false;
 	if (m_det_ready&&(!buffer_dets.empty())) {
-		curr_dets = buffer_dets;
-		m_landmark->get_landmark(cloned, curr_dets);
-		c_tracker->Landmark2Box(curr_dets, curr_dets);
+		std::vector<FaceBox> temp_dets = buffer_dets;
+		m_landmark->get_landmark(cloned, temp_dets);
+		c_tracker->Landmark2Box(temp_dets, curr_dets);
 		m_det_ready = false;
+		noNeedGetLandmark = true;
 	}
-	else {
-		if (!m_tracks.empty()) {
-			std::vector<FaceBox> prev_dets;
-			std::vector<FaceBox> predcit_dets;
-			prev_dets.resize(m_tracks.size());
-			for (size_t i = 0; i < m_tracks.size(); i++)
-			{
-				prev_dets[i] = m_tracks[i].bbox_;
-			}
-			//1: use history trks to get origin kpts
+	
+	if (!m_tracks.empty()) {
+		std::vector<FaceBox> prev_dets;
+		std::vector<FaceBox> predcit_dets;
+		prev_dets.resize(m_tracks.size());
+		for (size_t i = 0; i < m_tracks.size(); i++)
+		{
+			prev_dets[i] = m_tracks[i].bbox_;
+		}
+		//1: use history trks to get origin kpts
+		if (noNeedGetLandmark) {
+			prev_dets = curr_dets;
+		}
+		else {
 			m_landmark->get_landmark(cloned, prev_dets);
+		}
 			
-			//2: use history kpts to get new kpts
-			PredictKptsByOptflow(cloned, prev_dets, predcit_dets);
+		//2: use history kpts to get new kpts
+		PredictKptsByOptflow(cloned, prev_dets, predcit_dets);
 
-			c_tracker->Landmark2Box(predcit_dets, curr_dets);
+		c_tracker->Landmark2Box(predcit_dets, curr_dets);
 
-			printBoxs(prev_dets);
-			printf("hell0\n");
-			printBoxs(curr_dets);
-			printf("hell1\n");
-			//printTrks(m_tracks);
-		} else{
-			return;
-		}	
-	}
+		//printBoxs(prev_dets);
+		//printf("hell0\n");
+		//printBoxs(curr_dets);
+		//printf("hell1\n");
+		//printTrks(m_tracks);
+	} 
 
 	regions_t curr_tracks;
 	curr_tracks.resize(curr_dets.size());
@@ -185,15 +191,17 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 }
 
 void tracker::DetectThreading() {
-	while (m_flag) {
-		cv::Mat img(480,640,CV_8UC3);
+	cv::Mat img(480, 640, CV_8UC3);
+	while (m_flag) {	
 		printf("before size of queue %d,m_flag =%d\n", queue_images->size_approx(), m_flag);
 		if (queue_images->try_dequeue(img)) {
 			std::vector<FaceBox> temp_dets;
 			Detecting(img, temp_dets);
+
 			if (!temp_dets.empty()) {
 				buffer_dets = temp_dets;
 				m_det_ready = true;
+				cv::cvtColor(img, m_prev_gray, cv::COLOR_BGR2GRAY);
 				//m_flag = false;
 			}
 			else {
@@ -206,13 +214,11 @@ void tracker::DetectThreading() {
 }
 
 void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<FaceBox>& prev_boxes, std::vector<FaceBox>& predict_box) {
-	cv::Mat frame_clone = frame.clone();
 	if (m_prev_gray.empty()) {
-		cv::cvtColor(frame_clone, m_prev_gray, cv::COLOR_BGR2GRAY);
-	}	
-
+		cv::cvtColor(frame, m_prev_gray, cv::COLOR_BGR2GRAY);
+	}
 	cv::Mat curr_frame_gray;
-	cv::cvtColor(frame_clone, curr_frame_gray, cv::COLOR_BGR2GRAY);
+	cv::cvtColor(frame, curr_frame_gray, cv::COLOR_BGR2GRAY);
 
 	std::vector<cv::Point2f> prev_points;
 	std::vector<cv::Point2f> predict_points;
@@ -238,7 +244,7 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 	//cv::TermCriteria termcrit(CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 20, 0.03);
 	cv::TermCriteria termcrit(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 0, 0.001);
 	cv::calcOpticalFlowPyrLK(m_prev_gray, curr_frame_gray, prev_points, predict_points, status, err,
-		cv::Size(windowsize, windowsize), 3,termcrit);
+		cv::Size(windowsize, windowsize),3,termcrit);
 	
 	printf("res %d %d \n", status.size(), err.size());
 
@@ -256,7 +262,7 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 			}
 			else {
 				predict_box[i].ppoint[2 * j] = prev_points[i*numpts_num + j].x;
-				predict_box[i].ppoint[2 * j+1] = prev_points[i*numpts_num + j+1].y;
+				predict_box[i].ppoint[2 * j+1] = prev_points[i*numpts_num + j+1]. y;
 			}
 		}
 	}
