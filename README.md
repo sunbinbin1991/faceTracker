@@ -41,3 +41,46 @@ Todo：
 - [x] 光流法的参数需要调整；
 - [x] 
 
+---
+
+# Face Tracker
+Based on mtcnn face detection + face tracking (optical flow tracking), you need to be fast and stable
+
+## Development Environment
+ncnn Windows Vs2015 Win64
+
+## Open source framework
++ [ncnn] (https://github.com/Tencent/ncnn)
+
++ [opencv] (https://github.com/opencv/opencv)
+
+## Test Results
+! [test] (https://github.com/sunbinbin1991/faceTracker/blob/master/data/IU_mark.jpg?raw=true)
+
+## Quote
+[HyperFT] (https://github.com/zeusees/HyperFT): Reference part of the code module
+
+[ZQCNN] (https://github.com/zuoqing1988/ZQCNN): Contains a common component model library for face recognition systems, with acceleration;
+
+[ncnn_example] (https://github.com/MirrorYuChen/ncnn_example): Contains some model conversion files
+
+Compilation steps:
+
++ 1. Modify the opencv / ncnn path in CMakeList.txt to your own path;
++ 2, mkdir build
++ 3, cd build
++ 4, cmake .. -G "Visual Studio 14 2015 Win64"
++ 5, make -j4
+
+## Precautions
+
+1: The dynamic library that the runtime depends on needs to be copied to the same directory as the executable file, or refer to the following directory to add environment variables: https://blog.csdn.net/guyuealian/article/details/79412644
+
+2: The tracking test demo provides synchronous and asynchronous tracking solutions. Synchronization means that the detection is placed in the main thread and the tracking is matched after detection. Asynchronous means that the detection module has a separate sub-thread and will synchronize the detection result to the tracking master Threads for matching tracking;
+
+Todo:
+- [x] Perfect tracking module; 3/11/2019
+- [x] Tracking module optimization; 24/11/2019
+- [x] The matching logic needs to be modified. The current matching logic is just a simple iou calculation;
+- [x] parameters of optical flow method need to be adjusted;
+- [x]
