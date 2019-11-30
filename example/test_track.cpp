@@ -20,12 +20,14 @@ void test_video_cameral() {
 	cv::VideoCapture cap(0);
 	if (!cap.isOpened())
 	{
+		printf("cap is not open,pelease check your device\n");
 		return;
 	}
 	std::vector<FaceBox> faces;
 	while (cap.isOpened()) {
 		cap >> frame;
 		if (frame.empty()) {
+			printf("cap is not ready,pelease check your device\n");
 			printf("The End\n");
 			break;
 		}

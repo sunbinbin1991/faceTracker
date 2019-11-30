@@ -31,6 +31,9 @@ void CTracker::CalculateIOUs(FaceBox box1, const regions_t& tracks, std::pair<in
 }
 
 void CTracker::Landmark2Box(const std::vector<FaceBox>& boxes1, std::vector<FaceBox> &boxes2) {
+	if (boxes1.empty()) {
+		return;
+	}
 	boxes2.resize(boxes1.size());
 	for (size_t j = 0; j < boxes1.size(); j++)
 	{

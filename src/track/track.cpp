@@ -134,47 +134,50 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	cv::Mat cloned = frame.clone();
 
 	if (queue_images->size_approx() < 1) {
-		printf("enqueue size of queue %d\n", queue_images->size_approx());
+		//printf("enqueue size of queue %d\n", queue_images->size_approx());
 		queue_images->enqueue(cloned);
 	}
 
 	std::vector<FaceBox> curr_dets;
 	bool noNeedGetLandmark = false;
-	if (m_det_ready&&(!buffer_dets.empty())) {
+	if (m_det_ready) {
 		std::vector<FaceBox> temp_dets = buffer_dets;
 		m_landmark->get_landmark(cloned, temp_dets);
 		c_tracker->Landmark2Box(temp_dets, curr_dets);
 		m_det_ready = false;
 		noNeedGetLandmark = true;
 	}
+	else {
+		if (!m_tracks.empty()) {
+			std::vector<FaceBox> prev_dets;
+			std::vector<FaceBox> predcit_dets;
+			prev_dets.resize(m_tracks.size());
+			for (size_t i = 0; i < m_tracks.size(); i++)
+			{
+				prev_dets[i] = m_tracks[i].bbox_;
+			}
+			//1: use history trks to get origin kpts
+			if (noNeedGetLandmark) {
+				prev_dets = curr_dets;
+			}
+			else {
+				m_landmark->get_landmark(cloned, prev_dets);
+			}
+
+			//2: use history kpts to get new kpts
+			PredictKptsByOptflow(cloned, prev_dets, predcit_dets);
+
+			c_tracker->Landmark2Box(predcit_dets, curr_dets);
+
+			//printBoxs(prev_dets);
+			//printf("hell0\n");
+			//printBoxs(curr_dets);
+			//printf("hell1\n");
+			//printTrks(m_tracks);
+		}
+	}
 	
-	if (!m_tracks.empty()) {
-		std::vector<FaceBox> prev_dets;
-		std::vector<FaceBox> predcit_dets;
-		prev_dets.resize(m_tracks.size());
-		for (size_t i = 0; i < m_tracks.size(); i++)
-		{
-			prev_dets[i] = m_tracks[i].bbox_;
-		}
-		//1: use history trks to get origin kpts
-		if (noNeedGetLandmark) {
-			prev_dets = curr_dets;
-		}
-		else {
-			m_landmark->get_landmark(cloned, prev_dets);
-		}
-			
-		//2: use history kpts to get new kpts
-		PredictKptsByOptflow(cloned, prev_dets, predcit_dets);
-
-		c_tracker->Landmark2Box(predcit_dets, curr_dets);
-
-		//printBoxs(prev_dets);
-		//printf("hell0\n");
-		//printBoxs(curr_dets);
-		//printf("hell1\n");
-		//printTrks(m_tracks);
-	} 
+	
 
 	regions_t curr_tracks;
 	curr_tracks.resize(curr_dets.size());
@@ -182,9 +185,9 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	{
 		curr_tracks[i].bbox_ = curr_dets[i];
 	}
-	if (!curr_tracks.empty()) {
+	//if (!curr_tracks.empty()) {
 		Tracking(cloned, curr_tracks);
-	}
+	//}
 
 	cv::cvtColor(cloned, m_prev_gray, cv::COLOR_BGR2GRAY);
 	regs.assign(m_tracks.begin(), m_tracks.end());
@@ -193,7 +196,7 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 void tracker::DetectThreading() {
 	cv::Mat img(480, 640, CV_8UC3);
 	while (m_flag) {	
-		printf("before size of queue %d,m_flag =%d\n", queue_images->size_approx(), m_flag);
+		//printf("before size of queue %d,m_flag =%d\n", queue_images->size_approx(), m_flag);
 		if (queue_images->try_dequeue(img)) {
 			std::vector<FaceBox> temp_dets;
 			Detecting(img, temp_dets);
@@ -206,9 +209,9 @@ void tracker::DetectThreading() {
 			}
 			else {
 				buffer_dets.clear();
-				m_det_ready = false;
+				m_det_ready = true;
 			}
-			printf("try_dequeue size of queue %d\n", queue_images->size_approx());
+			//printf("try_dequeue size of queue %d\n", queue_images->size_approx());
 		}
 	}
 }
@@ -246,14 +249,17 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 	cv::calcOpticalFlowPyrLK(m_prev_gray, curr_frame_gray, prev_points, predict_points, status, err,
 		cv::Size(windowsize, windowsize),3,termcrit);
 	
-	printf("res %d %d \n", status.size(), err.size());
+	//printf("res %d %d \n", status.size(), err.size());
 
+	//get predict pts
+	std::vector<int> delete_idx;
 	for (size_t i = 0; i < prev_boxes.size(); i++)
 	{
 		FaceBox temp;
 		int numpts_num = prev_boxes[i].numpts;
 		temp.numpts = numpts_num;
 		predict_box.push_back(temp);
+		int lose_count = 0;
 		for (size_t j = 0; j < numpts_num; j++)
 		{
 			if (status[i*numpts_num + j]) {
@@ -261,22 +267,24 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 				predict_box[i].ppoint[2 * j + 1] = predict_points[i*numpts_num + j].y;
 			}
 			else {
+				lose_count += 1;
 				predict_box[i].ppoint[2 * j] = prev_points[i*numpts_num + j].x;
-				predict_box[i].ppoint[2 * j+1] = prev_points[i*numpts_num + j+1]. y;
+				predict_box[i].ppoint[2 * j+1] = prev_points[i*numpts_num + j]. y;
 			}
 		}
+		if (lose_count > 20) {
+			//lost almost 20 pts, the pts is not useful
+			delete_idx.push_back(i);
+		}
+		printf("err_count %d \n", lose_count);
 	}
 
-	//printf("\n");
-	//for (auto & itr : status)
-	//{
-	//	printf("status %d ", itr);
-	//}
-	//printf("\n");
-	//m_prev_frame = curr_frame_gray;
-	//cv::calcOpticalFlowPyrLK(m_prev_frame, curr_frame_gray, prev_points, predict_points, status, err,
-	//	cv::Size(windowsize, windowsize), 3,
-	//	cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 0, 0.001));
-
-
+	//if lost too much kpts then lose it
+	if (delete_idx.empty())
+		return;
+	std::sort(delete_idx.begin(), delete_idx.end());
+	// delete elements from high to low
+	for (int i = delete_idx.size() - 1; i >= 0; i--) {
+		predict_box.erase(predict_box.begin() + delete_idx[i]);
+	}
 };
