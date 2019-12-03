@@ -2,13 +2,16 @@
 
 landmark::landmark()
 {
-	std::string model_prefix = "D:/git/track/faceTracker/src/landmark/models/ncnn/";
+	std::string model_prefix = "D:/github/faceTracker/src/landmark/models/ncnn/";
 	std::string param_file = model_prefix + "lnet106_112.param";
 	std::string bin_file = model_prefix + "lnet106_112.bin";
 	_landmark_net.load_param(param_file.c_str());
 	_landmark_net.load_model(bin_file.c_str());
 }
 void landmark::get_landmark(const cv::Mat& image, std::vector<FaceBox> &faces) {
+	if (faces.empty()) {
+		return;
+	}
 	cv::Mat _image;
 	_image = image.clone();
 	int img_w = _image.cols;
