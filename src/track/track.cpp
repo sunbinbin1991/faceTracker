@@ -168,28 +168,18 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 			PredictKptsByOptflow(cloned, prev_dets, predcit_dets);
 
 			c_tracker->Landmark2Box(predcit_dets, curr_dets);
-
-			//printBoxs(prev_dets);
-			//printf("hell0\n");
-			//printBoxs(curr_dets);
-			//printf("hell1\n");
-			//printTrks(m_tracks);
 		}
 	}
 	
-	
-
 	regions_t curr_tracks;
 	curr_tracks.resize(curr_dets.size());
 	for (size_t i = 0; i < curr_dets.size(); i++)
 	{
 		curr_tracks[i].bbox_ = curr_dets[i];
 	}
-	//if (!curr_tracks.empty()) {
-		Tracking(cloned, curr_tracks);
-	//}
 
-	cv::cvtColor(cloned, m_prev_gray, cv::COLOR_BGR2GRAY);
+	Tracking(cloned, curr_tracks);
+
 	regs.assign(m_tracks.begin(), m_tracks.end());
 }
 
@@ -216,7 +206,7 @@ void tracker::DetectThreading() {
 	}
 }
 
-void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<FaceBox>& prev_boxes, std::vector<FaceBox>& predict_box) {
+void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<FaceBox>& prev_boxes, std::vector<FaceBox>& opt_predict_box) {
 	if (m_prev_gray.empty()) {
 		cv::cvtColor(frame, m_prev_gray, cv::COLOR_BGR2GRAY);
 	}
@@ -258,25 +248,28 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 		FaceBox temp;
 		int numpts_num = prev_boxes[i].numpts;
 		temp.numpts = numpts_num;
-		predict_box.push_back(temp);
+		opt_predict_box.push_back(temp);
 		int lose_count = 0;
+		int lost_cencert_x = (prev_boxes[i].x2 + prev_boxes[i].x1) >> 1;
+		int lost_cencert_y = (prev_boxes[i].y2 + prev_boxes[i].y1) >> 1;
+
 		for (size_t j = 0; j < numpts_num; j++)
 		{
 			if (status[i*numpts_num + j]) {
-				predict_box[i].ppoint[2 * j] = predict_points[i*numpts_num + j].x;
-				predict_box[i].ppoint[2 * j + 1] = predict_points[i*numpts_num + j].y;
+				opt_predict_box[i].ppoint[2 * j] = predict_points[i*numpts_num + j].x;
+				opt_predict_box[i].ppoint[2 * j + 1] = predict_points[i*numpts_num + j].y;
 			}
 			else {
 				lose_count += 1;
-				predict_box[i].ppoint[2 * j] = prev_points[i*numpts_num + j].x;
-				predict_box[i].ppoint[2 * j+1] = prev_points[i*numpts_num + j]. y;
+				opt_predict_box[i].ppoint[2 * j] = lost_cencert_x;
+				opt_predict_box[i].ppoint[2 * j+1] = lost_cencert_y;
 			}
 		}
 		if (lose_count > 20) {
 			//lost almost 20 pts, the pts is not useful
 			delete_idx.push_back(i);
 		}
-		printf("err_count %d \n", lose_count);
+		//printf("err_count %d \n", lose_count);
 	}
 
 	//if lost too much kpts then lose it
@@ -285,6 +278,6 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 	std::sort(delete_idx.begin(), delete_idx.end());
 	// delete elements from high to low
 	for (int i = delete_idx.size() - 1; i >= 0; i--) {
-		predict_box.erase(predict_box.begin() + delete_idx[i]);
+		opt_predict_box.erase(opt_predict_box.begin() + delete_idx[i]);
 	}
 };
