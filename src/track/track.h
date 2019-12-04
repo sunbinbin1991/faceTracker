@@ -45,8 +45,11 @@ private :
 	void Tracking(const cv::Mat& frame, const regions_t& regs);
 	
 	void DetectThreading();
-
+	
+	// tracking by optflow
 	void PredictKptsByOptflow(const cv::Mat & frame,const std::vector<FaceBox>& prev_box1, std::vector<FaceBox>& predict_box);
+
+	// tracking by kcf
 
 	FrameInfo m_frameInfo[2];
 	//draw related
@@ -81,10 +84,9 @@ private:
 	std::vector<FaceBox> buffer_dets;
 
 	
-
-
 // tracking strategy 0 : KCF
 	
+
 // tracking match strategy
 
 

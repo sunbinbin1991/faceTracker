@@ -54,34 +54,6 @@ void CTracker::Landmark2Box(const std::vector<FaceBox>& boxes1, std::vector<Face
 	
 }
 
-void CTracker::Landmark2BoxWithFlag(const std::vector<FaceBox>& boxes1, const std::vector<unsigned char>& status, std::vector<FaceBox> &boxes2) {
-	if (boxes1.empty()) {
-		return;
-	}
-	boxes2.resize(boxes1.size());
-	for (size_t j = 0; j < boxes1.size(); j++)
-	{
-		FaceBox temp;
-		boxes2[j] = boxes1[j];
-		boxes2[j].x1 = 1e5;
-		boxes2[j].y1 = 1e5;
-		boxes2[j].x2 = -1e5;
-		boxes2[j].y2 = -1e5;
-		int numpts_num = boxes1[j].numpts;
-		for (size_t i = 0; i <numpts_num; i++)
-		{
-			if ((unsigned char)status[i*numpts_num + j]) {
-				boxes2[j].x1 = std::min((int)(boxes1[j].ppoint[2 * i]), boxes2[j].x1);
-				boxes2[j].y1 = std::min((int)(boxes1[j].ppoint[2 * i + 1]), boxes2[j].y1);
-				boxes2[j].x2 = std::max((int)(boxes1[j].ppoint[2 * i]), boxes2[j].x2);
-				boxes2[j].y2 = std::max((int)(boxes1[j].ppoint[2 * i + 1]), boxes2[j].y2);
-			}			
-		}
-	}
-
-}
-
-
 void CTracker::AddNewTracks(FaceTrack& faceTrack, regions_t& tracks) {
 	faceTrack.existsTimes_++;
 	tracks.push_back(faceTrack);

@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <map>
+#include <opencv2/opencv.hpp>
 
 struct FaceBox
 {
@@ -32,8 +34,9 @@ public:
 };
 
 using regions_t = std::vector<FaceTrack>;
-
-
+using track_t = float;
+using Point_t = cv::Point_<track_t>;
+#define Mat_t CV_32FC
 // namespace Shape {
 
 // 	template <typename T> class Rect {

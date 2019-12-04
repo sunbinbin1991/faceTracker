@@ -3,6 +3,7 @@
 #include "track.h"
 #include "../example/utils.hpp"
 
+
 //构造函数中为什么不能初始化线程?
 tracker::tracker()
 {
@@ -195,7 +196,7 @@ void tracker::DetectThreading() {
 				buffer_dets = temp_dets;
 				m_det_ready = true;
 				cv::cvtColor(img, m_prev_gray, cv::COLOR_BGR2GRAY);
-				//m_flag = false;
+				//m_flag = false; //if just want test track performance just uncomment it;
 			}
 			else {
 				buffer_dets.clear();
