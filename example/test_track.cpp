@@ -40,7 +40,7 @@ void test_video_cameral() {
 		tk.TrackingAsyncProcess(frame, tracks);
 		
 		int64 t2 = cv::getTickCount();
-		printf("total %gms\n", (t2 - t1) * 1000 / cv::getTickFrequency());
+		printf("total %fms\n", (t2 - t1) * 1000 / cv::getTickFrequency());
 		DrawTracks(frame, tracks);
 		cv::imshow("image", frame);
 		char key = cv::waitKey(1);

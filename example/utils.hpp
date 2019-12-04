@@ -40,7 +40,6 @@ inline cv::Point2f get_point(const float* landmarks, int i) {
 	return cv::Point2f(landmarks[2 * i], landmarks[2 * i + 1]);
 }
 
-
 inline cv::Point2f get_projection(const cv::Point2f& p1, const cv::Point2f & p2, const cv::Point2f& p3) {
 	cv::Point2f rtp;
 	if ((std::fabs(p1.y - p2.y))<1e-5) {
@@ -105,6 +104,31 @@ inline void angle_estimate_5pts(const float* landmarks, float* angles) {
 		angles[0] = -180 * pitch / M_PI;
 	else
 		angles[0] = 180 * pitch / M_PI;
+}
+
+inline void printBox(const FaceBox& face) {
+	printf("%d %d %d %d \n", face.x1, face.y1, face.x2, face.y2);
+	for (size_t i = 0; i < face.numpts; i++)
+	{
+		//printf("%f %f ", face.ppoint[2 * i], face.ppoint[2 * i + 1]);
+	}
+	printf("\n");
+}
+
+inline void printBoxs(const std::vector<FaceBox>& faces) {
+	for (size_t i = 0; i < faces.size(); i++)
+	{
+		printf("det \t");
+		printBox(faces[i]);
+	}
+}
+
+inline void printTrks(const regions_t& reg_s) {
+	for (size_t i = 0; i < reg_s.size(); i++)
+	{
+		printf("trk \t");
+		printBox(reg_s[i].bbox_);
+	}
 }
 
 ////字符串分割函数
