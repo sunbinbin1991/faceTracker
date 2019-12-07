@@ -11,11 +11,16 @@ struct FaceBox
 	int y1;
 	int x2;
 	int y2;
+	cv::Point2f center_;
 	float area;
 	float ppoint[256];
 	float regreCoord[4];
 	float angles[3];
 	int numpts = 106;
+	void setCenter() {
+		center_.x = (x1 + x2)>>1;
+		center_.y = (y1 + y2)>>1;
+	}
 };
 
 //frame Info
@@ -26,42 +31,79 @@ public:
 	FaceBox bbox_;
 	int existsTimes_ = 0;
 	int age_ = 0;
-	FaceTrack() {};
-
+	FaceTrack() {};	
 	FaceTrack(int id, const FaceBox& rect) 
 	: id_(id)
-	, bbox_(rect){}
+	, bbox_(rect)
+	{}
 };
 
 using regions_t = std::vector<FaceTrack>;
 using track_t = float;
 using Point_t = cv::Point_<track_t>;
 #define Mat_t CV_32FC
-// namespace Shape {
 
-// 	template <typename T> class Rect {
-// 	public:
-// 		Rect() {}
-// 		Rect(T x, T y, T w, T h) {
-// 			this->x = x;
-// 			this->y = y;
-// 			this->width = w;
-// 			height = h;
+///
+/// \brief The CRegion class
+///
+class CRegion
+{
+public:
+	CRegion()
+		: m_type(""), m_confidence(-1)
+	{
+	}
 
-// 		}
-// 		T x;
-// 		T y;
-// 		T width;
-// 		T height;
+	CRegion(const cv::Rect& rect)
+		: m_brect(rect)
+	{
+		B2RRect();
+	}
 
-// 		cv::Rect convert_cv_rect(int _height, int _width)
-// 		{
-// 			cv::Rect Rect_(static_cast<int>(x*_width), static_cast<int>(y*_height),
-// 				static_cast<int>(width*_width), static_cast<int>(height*_height));
-// 			return Rect_;
-// 		}
-// 	};
-// }
+	CRegion(const cv::RotatedRect& rrect)
+		: m_rrect(rrect)
+	{
+		R2BRect();
+	}
+
+	CRegion(const cv::Rect& rect, const std::string& type, float confidence)
+		: m_brect(rect), m_type(type), m_confidence(confidence)
+	{
+		B2RRect();
+	}
+
+	cv::RotatedRect m_rrect;
+	cv::Rect m_brect;
+
+	std::string m_type;
+	float m_confidence = -1;
+
+	mutable cv::Mat m_hist;
+
+private:
+	///
+	/// \brief R2BRect
+	/// \return
+	///
+	cv::Rect R2BRect()
+	{
+		m_brect = m_rrect.boundingRect();
+		return m_brect;
+	}
+	///
+	/// \brief B2RRect
+	/// \return
+	///
+	cv::RotatedRect B2RRect()
+	{
+		m_rrect = cv::RotatedRect(m_brect.tl(), cv::Point2f(static_cast<float>(m_brect.x + m_brect.width), static_cast<float>(m_brect.y)), m_brect.br());
+		return m_rrect;
+	}
+};
+
+typedef std::vector<CRegion> cregions_t;
+
+
 
 
 namespace tracking

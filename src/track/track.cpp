@@ -3,12 +3,14 @@
 #include "track.h"
 #include "../example/utils.hpp"
 
-
+#define USE_KALMAN
 //构造函数中为什么不能初始化线程?
 tracker::tracker()
 {
 	m_detector = std::unique_ptr<MTCNN>(new MTCNN());
 	m_landmark = std::unique_ptr<landmark>(new landmark());
+	c_tracker = std::unique_ptr<CTracker>(new CTracker());
+
 	InitDetector();
 
 	//m_flag = true;
@@ -138,8 +140,14 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 		//printf("enqueue size of queue %d\n", queue_images->size_approx());
 		queue_images->enqueue(cloned);
 	}
+	//std::vector<FaceBox> curr_dets;
 
-	std::vector<FaceBox> curr_dets;
+	c_tracker->UpdateTrackingState(c_dets, cloned.cols,cloned.rows,m_fps);
+
+
+#ifdef USE_KALMAN
+	
+#else
 	bool noNeedGetLandmark = false;
 	if (m_det_ready) {
 		std::vector<FaceBox> temp_dets = buffer_dets;
@@ -171,7 +179,6 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 			c_tracker->Landmark2Box(predcit_dets, curr_dets);
 		}
 	}
-	
 	regions_t curr_tracks;
 	curr_tracks.resize(curr_dets.size());
 	for (size_t i = 0; i < curr_dets.size(); i++)
@@ -182,6 +189,9 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	Tracking(cloned, curr_tracks);
 
 	regs.assign(m_tracks.begin(), m_tracks.end());
+#endif
+	
+
 }
 
 void tracker::DetectThreading() {
@@ -196,6 +206,7 @@ void tracker::DetectThreading() {
 				buffer_dets = temp_dets;
 				m_det_ready = true;
 				cv::cvtColor(img, m_prev_gray, cv::COLOR_BGR2GRAY);
+				//c_dets.assign(std::begin(buffer_dets), std::end(buffer_dets));
 				//m_flag = false; //if just want test track performance just uncomment it;
 			}
 			else {
@@ -282,3 +293,14 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 		opt_predict_box.erase(opt_predict_box.begin() + delete_idx[i]);
 	}
 };
+
+//hungarian matching
+
+
+
+void tracker::SolveHungrian(const distMatrix_t& costMatrix, size_t N, size_t M, assignments_t& assignment)
+{
+	AssignmentProblemSolver APS;
+	APS.Solve(costMatrix, N, M, assignment, AssignmentProblemSolver::optimal);
+}
+

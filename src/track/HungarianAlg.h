@@ -2,7 +2,8 @@
 #include <iostream>
 #include <limits>
 #include <time.h>
-#include "defines.h"
+#include "common.h"
+
 // http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=hungarianAlgorithm
 
 typedef std::vector<int> assignments_t;

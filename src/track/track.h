@@ -11,6 +11,7 @@
 #include "../detect/mtcnn.h"
 #include "../landmark/landmark.h"
 #include "ctracker.h"
+#include "kalman.h"
 
 typedef struct FrameInfo
 {
@@ -24,11 +25,18 @@ typedef struct FrameInfo
 
 using namespace moodycamel;
 
+class CTracker;
+
 class tracker
 {
 public:
 	tracker();
-    ~tracker();
+	tracker(const tracker&) = delete;
+	tracker(tracker&&) = delete;
+	tracker& operator=(const tracker&) = delete;
+	tracker& operator=(tracker&&) = delete;
+
+	~tracker();
 	
 	void TrackingSyncProcess(const cv::Mat& frame, regions_t& regs);
 
@@ -49,10 +57,13 @@ private :
 	// tracking by optflow
 	void PredictKptsByOptflow(const cv::Mat & frame,const std::vector<FaceBox>& prev_box1, std::vector<FaceBox>& predict_box);
 
+	//Hungarian matchting: matchting detects and tracks
+
+	void SolveHungrian(const distMatrix_t& costMatrix, size_t N, size_t M, assignments_t& assignment);
+
 	// tracking by kcf
 
 	FrameInfo m_frameInfo[2];
-	//draw related
 
 	char angletext[256];
 	char scoretext[256];
@@ -70,6 +81,7 @@ private:
 	std::unique_ptr<MTCNN> m_detector;
 	std::unique_ptr<landmark> m_landmark;
 	std::unique_ptr<CTracker> c_tracker;
+
 	size_t m_trackID = 0;
 	regions_t m_tracks;
 
@@ -82,14 +94,13 @@ private:
 	size_t max_queue_num = 10;
 
 	std::vector<FaceBox> buffer_dets;
-
 	
 // tracking strategy 0 : KCF
 	
-
 // tracking match strategy
-
-
+	cregions_t c_dets;
+	float m_fps = 25;
 };
+
 
 
