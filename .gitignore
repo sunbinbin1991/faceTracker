@@ -1,5 +1,8 @@
 ./3rdparty/opencv/x64/vc14/bin/opencv_world342.dll
 ./3rdparty/opencv/x64/vc14/bin/opencv_world342d.dll
+*.opencv_world342.dll
+*.opencv_world342d.dll
+*.dll
 Debug
 build
 data/videos
