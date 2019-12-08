@@ -20,8 +20,7 @@ CTrack::CTrack(
 	size_t trackID,
 	bool filterObjectSize,
 	tracking::LostTrackType externalTrackerForLost
-)
-	:
+)	:
 	m_trackID(trackID),
 	m_skippedFrames(0),
 	m_lastRegion(region),

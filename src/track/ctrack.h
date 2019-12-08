@@ -18,7 +18,7 @@ public:
 		size_t trackID,
 		bool filterObjectSize,
 		tracking::LostTrackType externalTrackerForLost);
-
+	
 	///
 	/// \brief CalcDist
 	/// Euclidean distance in pixels between objects centres on two N and N+1 frames
@@ -66,8 +66,6 @@ public:
 
 	cv::RotatedRect GetLastRect() const;
 
-	const Point_t& AveragePoint() const;
-	Point_t& AveragePoint();
 	const CRegion& LastRegion() const;
 	size_t SkippedFrames() const;
 	size_t& SkippedFrames();

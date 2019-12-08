@@ -143,8 +143,10 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	//std::vector<FaceBox> curr_dets;
 
 	c_tracker->UpdateTrackingState(c_dets, cloned.cols,cloned.rows,m_fps);
+	//CTracks_t c_trks;
+	//c_trks = c_tracker->GetTracks();
 
-
+	//printf("c_trks size \%d\n", c_trks.size());
 #ifdef USE_KALMAN
 	
 #else
@@ -206,7 +208,14 @@ void tracker::DetectThreading() {
 				buffer_dets = temp_dets;
 				m_det_ready = true;
 				cv::cvtColor(img, m_prev_gray, cv::COLOR_BGR2GRAY);
-				//c_dets.assign(std::begin(buffer_dets), std::end(buffer_dets));
+
+				//cregions_t temp_regions;			
+				//for (auto rect : temp_dets)
+				//{
+				//	temp_regions.push_back(rect);
+				//}
+
+				//c_dets.assign(std::begin(temp_regions), std::end(temp_regions));
 				//m_flag = false; //if just want test track performance just uncomment it;
 			}
 			else {

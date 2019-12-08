@@ -54,6 +54,14 @@ public:
 	{
 	}
 
+	CRegion(const FaceBox& fb) {
+		m_brect.x = fb.x1;
+		m_brect.y = fb.y1;
+		m_brect.width = fb.x2 - fb.x1;
+		m_brect.height = fb.y2 - fb.y1;
+		B2RRect();
+	}
+
 	CRegion(const cv::Rect& rect)
 		: m_brect(rect)
 	{

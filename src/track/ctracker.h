@@ -92,10 +92,13 @@ public:
 	void UpdateTracks(FaceTrack& faceTrack, FaceTrack& tracks);
 	void DeleteLostTracks(regions_t& tracks);
 
+	//
 	void UpdateTrackingState(const cregions_t& regions, int width, int height, int fps);
 	void CreateDistaceMatrix(const cregions_t& regions, distMatrix_t& costMatrix, track_t maxPossibleCost, track_t& maxCost);
 	void SolveHungrian(const distMatrix_t& costMatrix, size_t N, size_t M, assignments_t& assignment);
 	
+	//
+	CTracks_t GetTracks() const;
 private:
 	TrackerSettings m_settings;
 

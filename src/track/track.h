@@ -99,6 +99,8 @@ private:
 	
 // tracking match strategy
 	cregions_t c_dets;
+	
+
 	float m_fps = 25;
 };
 

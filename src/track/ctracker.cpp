@@ -195,7 +195,7 @@ void CTracker::UpdateTrackingState(const cregions_t& regions, int width ,int hei
 					height
 				);
 			}
-			else				     // if not continue using predictions
+			else // if not continue using predictions
 			{
 				c_tracks[i]->Update(CRegion(), false, m_settings.m_maxTraceLength, width,height);
 			}
@@ -265,6 +265,20 @@ void CTracker::SolveHungrian(const distMatrix_t& costMatrix, size_t N, size_t M,
 {
 	AssignmentProblemSolver APS;
 	APS.Solve(costMatrix, N, M, assignment, AssignmentProblemSolver::optimal);
+}
+
+CTracks_t CTracker::GetTracks() const
+{
+	CTracks_t tracks;
+	if (!c_tracks.empty())
+	{
+		tracks.reserve(c_tracks.size());
+		for (const auto& track : c_tracks)
+		{
+			tracks.push_back(track);
+		}
+	}
+	return tracks;
 }
 
 ///
