@@ -88,7 +88,8 @@ private:
 // tracking strategy 0 : KCF
 	
 // tracking match strategy
-
+	float m_distThres = 0.5;
+	size_t m_maximumAllowedSkippedFrames = 25;
 
 };
 

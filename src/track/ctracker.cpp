@@ -85,7 +85,6 @@ void CTracker::Landmark2BoxWithFlag(const std::vector<FaceBox>& boxes1, const st
 void CTracker::AddNewTracks(FaceTrack& faceTrack, regions_t& tracks) {
 	faceTrack.existsTimes_++;
 	tracks.push_back(faceTrack);
-
 };
 
 void CTracker::UpdateTracks(FaceTrack& currfaceTrack, FaceTrack& prefaceTrack) {
@@ -136,3 +135,82 @@ void CTracker::DeleteLostTracks(regions_t& tracks) {
 		tracks.erase(it);
 	}
 };
+
+
+void CTracker::DeleteLostTracks2(regions_t& tracks) {
+	regions_t removed;
+	std::vector<int> delete_idx;
+	for (int i = 0; i < tracks.size(); i++) {
+
+		//int thr_lost_count = tracks[i].age_ - tracks[i].existsTimes_;
+		int thr_lost_count = tracks[i].lostTimes_;
+		if (thr_lost_count>5) {
+			delete_idx.push_back(i);
+		}
+	}
+	if (delete_idx.empty()) {
+		return;
+	}
+	std::sort(delete_idx.begin(), delete_idx.end());
+	removed.reserve(delete_idx.size());
+	for (int i = delete_idx.size() - 1; i >= 0; i--) {
+		auto it = std::next(tracks.begin(), delete_idx[i]);
+		removed.push_back(std::move(*it));
+		tracks.erase(it);
+	}
+};
+
+void CTracker::CreateDistaceMatrix(const regions_t& curr_dets, const regions_t& pre_trks, distMatrix_t& costMatrix, track_t maxPossibleCost, track_t& maxCost) {
+	const size_t N = pre_trks.size();	// Tracking objects
+	maxCost = 0;
+
+	for (size_t i = 0; i < pre_trks.size(); ++i)
+	{
+		for (size_t j = 0; j < curr_dets.size(); ++j)
+		{
+			auto dist = maxPossibleCost;
+			dist = 0;
+			//size_t ind = 0;
+			FaceBox pre_box = pre_trks[i].bbox_;
+			FaceBox curr_box = curr_dets[j].bbox_;
+			dist = CalcDistCenter(pre_box, curr_box)*(1-getIou(pre_box,curr_box));
+			printf(" coust \t %f ", dist);
+			costMatrix[i + j * N] = dist;
+		}
+	}
+}
+
+void CTracker::SolveHungrian(const distMatrix_t& costMatrix, size_t N, size_t M, assignments_t& assignment)
+{
+	AssignmentProblemSolver APS;
+	APS.Solve(costMatrix, N, M, assignment, AssignmentProblemSolver::optimal);
+}
+
+track_t CTracker::CalcDistCenter(FaceBox& pre_box, FaceBox& curr_box)
+{
+	cv::Point2f cent_pre = pre_box.getCenter();
+	cv::Point2f cent_pre2 = curr_box.getCenter();
+	cv::Point2f diff = cent_pre2 - cent_pre;
+	return sqrtf(square(diff.x) + square(diff.y));
+};
+
+float CTracker::getIou(const FaceBox& curr_fb, const FaceBox& prev_fb) {
+	float box_area = (curr_fb.x2 - curr_fb.x1 + 1) *(curr_fb.y2 - curr_fb.y1 + 1);
+	float area = (prev_fb.x2 - prev_fb.x1 + 1) *(prev_fb.y2 - prev_fb.y1 + 1);
+	float xx1 = fmax(prev_fb.x1, curr_fb.x1);
+	float xx2 = fmin(prev_fb.x2, curr_fb.x2);
+	float yy1 = fmax(prev_fb.y1, curr_fb.y1);
+	float yy2 = fmin(prev_fb.y2, curr_fb.y2);
+
+	float w = fmax(0, xx2 - xx1 + 1);
+	float h = fmax(0, yy2 - yy1 + 1);
+	float inter = w *h;
+	return inter / (box_area + area - inter);
+};
+
+
+track_t CTracker::CalcDistRect(FaceBox& pre_box, FaceBox& curr_box) 
+{
+	float iou = getIou(pre_box, curr_box);
+	return iou;
+}

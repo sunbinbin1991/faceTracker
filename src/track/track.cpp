@@ -112,10 +112,6 @@ void tracker::MatchingByIOU(const cv::Mat& frame, const regions_t& regs) {
 	}
 }
 
-void tracker::MatchingByHungarian(const cv::Mat& frame, const regions_t& regs) {
-
-}
-
 void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
 	
 	regions_t curr_detections;
@@ -181,8 +177,11 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 	{
 		curr_tracks[i].bbox_ = curr_dets[i];
 	}
+	//simple method
+	//MatchingByIOU(cloned, curr_tracks);
 
-	MatchingByIOU(cloned, curr_tracks);
+	//simple method
+	MatchingByHungarian(cloned, curr_tracks);
 
 	regs.assign(m_tracks.begin(), m_tracks.end());
 }
@@ -285,3 +284,83 @@ void tracker::PredictKptsByOptflow(const cv::Mat & frame, const std::vector<Face
 		opt_predict_box.erase(opt_predict_box.begin() + delete_idx[i]);
 	}
 };
+
+void tracker::MatchingByHungarian(const cv::Mat& currFrame, const regions_t& current_dets) {
+	//intput 1: current_dets tracks history  matching
+	//output 2: m_tracks updated
+	const size_t N = m_tracks.size();	// Tracking objects
+	const size_t M = current_dets.size();	// Detections or regions
+	assignments_t assignment(N, -1); // Assignments regions -> tracks
+
+	if (!m_tracks.empty())
+	{
+		// Distance matrix between all tracks to all regions
+		distMatrix_t costMatrix(N * M);
+		const track_t maxPossibleCost = static_cast<track_t>(currFrame.cols * currFrame.rows);
+		track_t maxCost = 0;
+		c_tracker->CreateDistaceMatrix(current_dets,m_tracks, costMatrix, maxPossibleCost, maxCost);
+
+		// Solving assignment problem (tracks and predictions of Kalman filter)
+		c_tracker->SolveHungrian(costMatrix, N, M, assignment);
+
+		// clean assignment from pairs with large distance
+		for (size_t i = 0; i < assignment.size(); i++)
+		{
+			//printf("costMatrix[i + assignment[i] * N] %f\n", costMatrix[i + assignment[i] * N]);
+			if (assignment[i] != -1)
+			{
+				printf("costMatrix[i + assignment[i] * N],=%f\n", costMatrix[i + assignment[i] * N]);
+				if (costMatrix[i + assignment[i] * N] > 100)
+				{
+					assignment[i] = -1;
+					m_tracks[i].lostTimes_++;
+				}
+			}
+			else
+			{
+				// If track have no assigned detect, then increment skipped frames counter.
+				m_tracks[i].lostTimes_++;
+			}
+		}
+	}
+	
+	//3: assign dets not assign
+	for (size_t i = 0; i < current_dets.size(); ++i)
+	{
+		if (find(assignment.begin(), assignment.end(), i) == assignment.end())
+		{
+			FaceTrack tempTrk = current_dets[i];
+			tempTrk.id_ = m_trackID++;
+			c_tracker->AddNewTracks(tempTrk, m_tracks);
+		}
+	}
+
+
+
+	//4:if dets is matching then update tracks
+	int stop_index = assignment.size();
+	for (size_t i = 0; i < stop_index; i++)
+	{
+		if (assignment[i] != -1) // If we have assigned detect, then update using its coordinates,
+		{
+			m_tracks[i].lostTimes_ = 0;
+			FaceTrack tempTrk = current_dets[assignment[i]];
+			c_tracker->UpdateTracks(tempTrk, m_tracks[i]);
+		}
+		else // if not continue using predictions
+		{
+			
+		}
+	}
+	//for (auto &trk : m_tracks)
+	//{
+	//	trk.age_++;
+	//}
+
+	c_tracker->DeleteLostTracks2(m_tracks);
+
+
+
+}
+
+

@@ -14,4 +14,6 @@ add_library(landmark ./landmark/landmark.cpp)
 #add track related
 include_directories(./track)
 
-add_library(track ./track/ctracker.cpp ./track/track.cpp)
+file(GLOB track_srcs ./track/*.cpp)
+
+add_library(track ${track_srcs})
