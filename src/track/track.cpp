@@ -69,7 +69,7 @@ void tracker::Detecting(const cv::Mat& frame, std::vector<FaceBox>& regs) {
 };
 
 //simple tracking matching two rects by iou
-void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
+void tracker::MatchingByIOU(const cv::Mat& frame, const regions_t& regs) {
 	if (m_tracks.empty()) {
 		for (const auto& reg : regs)
 		{
@@ -112,13 +112,17 @@ void tracker::Tracking(const cv::Mat& frame, const regions_t& regs) {
 	}
 }
 
+void tracker::MatchingByHungarian(const cv::Mat& frame, const regions_t& regs) {
+
+}
+
 void tracker::TrackingSyncProcess(const cv::Mat& frame, regions_t& regs) {
 	
 	regions_t curr_detections;
 	
 	Detecting(frame, curr_detections);
 	
-	Tracking(frame, curr_detections);
+	MatchingByIOU(frame, curr_detections);
 
 	regs.assign(std::begin(m_tracks), std::end(m_tracks));
 }
@@ -178,7 +182,7 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 		curr_tracks[i].bbox_ = curr_dets[i];
 	}
 
-	Tracking(cloned, curr_tracks);
+	MatchingByIOU(cloned, curr_tracks);
 
 	regs.assign(m_tracks.begin(), m_tracks.end());
 }

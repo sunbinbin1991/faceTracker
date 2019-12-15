@@ -42,8 +42,10 @@ private :
 
 	void Detecting(const cv::Mat& frame, std::vector<FaceBox>& regs);
 
-	void Tracking(const cv::Mat& frame, const regions_t& regs);
+	void MatchingByIOU(const cv::Mat& frame, const regions_t& regs);
 	
+	void MatchingByHungarian(const cv::Mat& frame, const regions_t& regs);
+
 	void DetectThreading();
 
 	void PredictKptsByOptflow(const cv::Mat & frame,const std::vector<FaceBox>& prev_box1, std::vector<FaceBox>& predict_box);
