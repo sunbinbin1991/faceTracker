@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <opencv2/opencv.hpp>
 
 struct FaceBox
 {
@@ -14,6 +15,13 @@ struct FaceBox
 	float regreCoord[4];
 	float angles[3];
 	int numpts = 106;
+
+	cv::Point2f getCenter() {
+		cv::Point2f center;
+		center.x = (x2 + x1) / 2.;
+		center.y = (y2 + y1) / 2.;
+		return center;
+	}
 };
 
 //frame Info
@@ -23,6 +31,7 @@ public:
 	int id_;
 	FaceBox bbox_;
 	int existsTimes_ = 0;
+	int lostTimes_ = 0;
 	int age_ = 0;
 	FaceTrack() {};
 

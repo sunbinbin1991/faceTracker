@@ -50,6 +50,45 @@ void test_video_cameral() {
 	}
 }
 
+void test_video_file(const char * videoPath) {
+
+	//std::unique_ptr<tracker> tk = std::unique_ptr<tracker>(new tracker());
+	tracker tk;
+	cv::Mat frame;
+	regions_t tracks;
+	cv::VideoCapture cap(videoPath);
+	if (!cap.isOpened())
+	{
+		printf("cap is not open,pelease check your device\n");
+		return;
+	}
+	std::vector<FaceBox> faces;
+	while (cap.isOpened()) {
+		cap >> frame;
+		if (frame.empty()) {
+			printf("cap is not ready,pelease check your device\n");
+			printf("The End\n");
+			break;
+		}
+		//  tracking with detect
+		//tk.TrackingSyncProcess(frame, tracks);
+
+		// tracking with new thread detect
+		int64 t1 = cv::getTickCount();
+
+		tk.TrackingAsyncProcess(frame, tracks);
+
+		int64 t2 = cv::getTickCount();
+		printf("total %fms\n", (t2 - t1) * 1000 / cv::getTickFrequency());
+		DrawTracks(frame, tracks);
+		cv::imshow("image", frame);
+		char key = cv::waitKey(25);
+		if (key == 27) {
+			break;
+		}
+	}
+}
+
 void test_image() {
 	tracker tk;
 	regions_t tracks;
@@ -80,7 +119,8 @@ void test_concurrentqueue() {
 }
 
 int main(){
-	test_video_cameral();
+	test_video_file("../../data/track.mp4");
+	//test_video_cameral();
 	//test_image();
 
 	//test_concurrentqueue();

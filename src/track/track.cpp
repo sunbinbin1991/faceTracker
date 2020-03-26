@@ -85,7 +85,7 @@ void tracker::MatchingByIOU(const cv::Mat& frame, const regions_t& regs) {
 				FaceTrack tempTrk = reg;
 				std::pair<int, float> ious(0, 0.);
 				c_tracker->CalculateIOUs(tempTrk.bbox_, m_tracks, ious);
-				if (ious.second < 0.2) {					
+				if (ious.second < 0.3) {					
 					//iou<0.5 add new track
 					tempTrk.id_ = m_trackID++; 
 					c_tracker->AddNewTracks(tempTrk, m_tracks);
@@ -178,10 +178,10 @@ void tracker::TrackingAsyncProcess(const cv::Mat& frame, regions_t& regs) {
 		curr_tracks[i].bbox_ = curr_dets[i];
 	}
 	//simple method
-	//MatchingByIOU(cloned, curr_tracks);
+	MatchingByIOU(cloned, curr_tracks);
 
 	//simple method
-	MatchingByHungarian(cloned, curr_tracks);
+	//MatchingByHungarian(cloned, curr_tracks);
 
 	regs.assign(m_tracks.begin(), m_tracks.end());
 }
